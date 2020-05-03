@@ -2,6 +2,7 @@
 using OpenToolkit.Windowing.Common;
 using OpenToolkit.Windowing.Desktop;
 using System;
+using System.Threading;
 using VoxelCraft.Rendering;
 
 namespace VoxelCraft
@@ -14,7 +15,7 @@ namespace VoxelCraft
         private readonly Action<FrameEventArgs> _onUpdate;
         private readonly Action<FrameEventArgs> _onRender;
 
-        public WindowHandler(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings, 
+        public WindowHandler(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings,
             Action onLoad, Action onClosed, Action<ResizeEventArgs> onResize, Action<FrameEventArgs> onUpdate, Action<FrameEventArgs> onRender) : base(gameWindowSettings, nativeWindowSettings)
         {
             _onLoad = onLoad;
@@ -50,8 +51,15 @@ namespace VoxelCraft
 
         protected override void OnRenderFrame(FrameEventArgs args)
         {
+            Graphics.ClearQueue();
             _onRender?.Invoke(args);
+
             SwapBuffers();
+
+            if (args.Time < 1000d / RenderFrequency)
+            {
+                Thread.Sleep((int)(Math.Round(1000 / RenderFrequency - args.Time) * 0.9));
+            }
         }
     }
 }

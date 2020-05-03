@@ -14,7 +14,9 @@ namespace VoxelCraft
             // is closing, this prevents that issue. A better solution should be implemented
             // though.
             if (frame == null || frame.GetFileName() == null)
+            {
                 return;
+            }
 
             string[] splitFilePath = frame.GetFileName().Split('\\');
             string fileName = splitFilePath[splitFilePath.Length - 1];

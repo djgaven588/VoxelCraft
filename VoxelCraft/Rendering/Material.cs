@@ -1,5 +1,6 @@
 ﻿using OpenToolkit.Graphics.OpenGL4;
 using OpenToolkit.Mathematics;
+using System;
 
 namespace VoxelCraft.Rendering
 {
@@ -59,6 +60,18 @@ namespace VoxelCraft.Rendering
         public virtual void AfterRenderIndividual()
         {
 
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is Material material &&
+                   ProgramID == material.ProgramID &&
+                   _textureID == material._textureID;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(ProgramID, _textureID);
         }
     }
 }

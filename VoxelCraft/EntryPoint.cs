@@ -3,13 +3,11 @@ using OpenToolkit.Mathematics;
 using OpenToolkit.Windowing.Common;
 using OpenToolkit.Windowing.Desktop;
 using System;
-using System.Drawing.Drawing2D;
-using System.IO;
 using VoxelCraft.Rendering;
 
 namespace VoxelCraft
 {
-    class Program
+    internal class EntryPoint
     {
         static void Main(string[] args)
         {
@@ -23,11 +21,16 @@ namespace VoxelCraft
 
             new WindowHandler(new GameWindowSettings()
             {
-                IsMultiThreaded = false, RenderFrequency = 60, UpdateFrequency = 50
+                IsMultiThreaded = false,
+                RenderFrequency = 60,
+                UpdateFrequency = 50
             },
             new NativeWindowSettings()
             {
-                API = ContextAPI.OpenGL, APIVersion = new Version(4, 0), Title = "Voxel Craft", Size = new Vector2i(windowWidth, windowHeight)
+                API = ContextAPI.OpenGL,
+                APIVersion = new Version(4, 0),
+                Title = "Voxel Craft",
+                Size = new Vector2i(windowWidth, windowHeight)
             }, OnLoad, null, OnResize, null, OnRender).Run();
         }
 
@@ -46,7 +49,7 @@ namespace VoxelCraft
         {
             testMesh = Mesh.GenerateMesh(0, 0, StandardMeshVertexData.Attributes);
 
-            testMesh.UploadMeshData(new StandardMeshVertexData[] { 
+            testMesh.UploadMeshData(new StandardMeshVertexData[] {
                 new StandardMeshVertexData(new Vector3d(-0.25,  0.25, 0), new Vector2d(0, 0)),
                 new StandardMeshVertexData(new Vector3d(0.25,   0.25, 0), new Vector2d(1, 0)),
                 new StandardMeshVertexData(new Vector3d(0.25,  -0.25, 0), new Vector2d(1, 1)),
@@ -104,9 +107,9 @@ namespace VoxelCraft
 
             material = new Material(RenderDataHandler.GenerateProgram("./Rendering/Shaders/vertex.txt", "./Rendering/Shaders/fragment.txt", StandardMeshVertexData.ShaderAttributes), RenderDataHandler.LoadTexture("Tree.png"));
             skyboxMat = new SkyboxMaterial(RenderDataHandler.GenerateProgram("./Rendering/Shaders/skyboxVert.txt", "./Rendering/Shaders/skyboxFrag.txt", PositionOnlyMeshVertexData.ShaderAttributes),
-                RenderDataHandler.LoadCubeMap(new string[] { 
-                    "./Artwork/Skybox/right.png", "./Artwork/Skybox/left.png", 
-                    "./Artwork/Skybox/top.png", "./Artwork/Skybox/bottom.png", 
+                RenderDataHandler.LoadCubeMap(new string[] {
+                    "./Artwork/Skybox/right.png", "./Artwork/Skybox/left.png",
+                    "./Artwork/Skybox/top.png", "./Artwork/Skybox/bottom.png",
                     "./Artwork/Skybox/front.png", "./Artwork/Skybox/back.png"
                 }));
 
@@ -134,10 +137,12 @@ namespace VoxelCraft
             Graphics.UpdateCameraMatrix(viewMatrix * projectionMatrix);
 
             // Quad
-            Graphics.RenderNow(material, testMesh, Mathmatics.CreateTransformationMatrix(new Vector3d(0, 0, -1.5), Quaterniond.Identity, Vector3d.One));
+            Graphics.QueueDraw(material, testMesh, Mathmatics.CreateTransformationMatrix(new Vector3d(0, 0, -1.5), Quaterniond.Identity, Vector3d.One));
+
+            Graphics.HandleQueue();
 
             // Skybox
-            Graphics.RenderNow(skyboxMat, skyboxMesh, new Matrix4(new Matrix3(viewMatrix)) * projectionMatrix, Matrix4.Identity);
+            Graphics.DrawNow(skyboxMat, skyboxMesh, new Matrix4(new Matrix3(viewMatrix)) * projectionMatrix, Matrix4.Identity);
         }
     }
 }

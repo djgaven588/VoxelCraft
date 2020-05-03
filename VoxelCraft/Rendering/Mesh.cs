@@ -1,4 +1,5 @@
 ﻿using OpenToolkit.Graphics.OpenGL4;
+using System;
 
 namespace VoxelCraft.Rendering
 {
@@ -35,7 +36,7 @@ namespace VoxelCraft.Rendering
             GL.BindVertexArray(0);
         }
 
-        public unsafe void UploadMeshData<T>(T[] vertices, int vertexCount, uint[] indicies, int indiciesCount) where T: unmanaged
+        public unsafe void UploadMeshData<T>(T[] vertices, int vertexCount, uint[] indicies, int indiciesCount) where T : unmanaged
         {
             GL.BindVertexArray(VAOBuffer);
 
@@ -67,6 +68,19 @@ namespace VoxelCraft.Rendering
         public static Mesh GenerateMesh(int vertCount, int indicieCount, VertexAttributeEntry[] attributes)
         {
             return new Mesh(RenderDataHandler.GenerateVAO(), RenderDataHandler.GenerateVBO(), RenderDataHandler.GenerateVBO(), vertCount, indicieCount, attributes);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is Mesh mesh &&
+                   VAOBuffer == mesh.VAOBuffer &&
+                   VertexBuffer == mesh.VertexBuffer &&
+                   IndiceBuffer == mesh.IndiceBuffer;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(VAOBuffer, VertexBuffer, IndiceBuffer);
         }
     }
 }

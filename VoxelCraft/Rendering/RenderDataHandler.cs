@@ -79,7 +79,7 @@ namespace VoxelCraft.Rendering
         /// Deletes a vertex buffer object or generic buffer, your choice. (VBO)
         /// </summary>
         /// <param name="id"></param>
-        public static void DeleteVBO(int id) 
+        public static void DeleteVBO(int id)
         {
             GL.DeleteBuffer(id);
             _storedVBOs.Remove(id);
@@ -191,14 +191,20 @@ namespace VoxelCraft.Rendering
             GL.CompileShader(vertShader);
 
             string vertexShaderLog = GL.GetShaderInfoLog(vertShader);
-            if(string.IsNullOrEmpty(vertexShaderLog) == false) Debug.Log(vertexShaderLog);
+            if (string.IsNullOrEmpty(vertexShaderLog) == false)
+            {
+                Debug.Log(vertexShaderLog);
+            }
 
             int fragShader = GL.CreateShader(ShaderType.FragmentShader);
             GL.ShaderSource(fragShader, File.ReadAllText(fragmentShaderPath));
             GL.CompileShader(fragShader);
 
             string fragmentShaderLog = GL.GetShaderInfoLog(fragShader);
-            if (string.IsNullOrEmpty(vertexShaderLog) == false) Debug.Log(fragmentShaderLog);
+            if (string.IsNullOrEmpty(vertexShaderLog) == false)
+            {
+                Debug.Log(fragmentShaderLog);
+            }
 
             int shaderProgram = GL.CreateProgram();
 
