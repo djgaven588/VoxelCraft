@@ -2,16 +2,17 @@
 using OpenToolkit.Windowing.Common;
 using OpenToolkit.Windowing.Desktop;
 using System;
+using VoxelCraft.Rendering;
 
 namespace VoxelCraft
 {
     public class WindowHandler : GameWindow
     {
-        private Action _onLoad;
-        private Action _onClosed;
-        private Action<ResizeEventArgs> _onResize;
-        private Action<FrameEventArgs> _onUpdate;
-        private Action<FrameEventArgs> _onRender;
+        private readonly Action _onLoad;
+        private readonly Action _onClosed;
+        private readonly Action<ResizeEventArgs> _onResize;
+        private readonly Action<FrameEventArgs> _onUpdate;
+        private readonly Action<FrameEventArgs> _onRender;
 
         public WindowHandler(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings, 
             Action onLoad, Action onClosed, Action<ResizeEventArgs> onResize, Action<FrameEventArgs> onUpdate, Action<FrameEventArgs> onRender) : base(gameWindowSettings, nativeWindowSettings)

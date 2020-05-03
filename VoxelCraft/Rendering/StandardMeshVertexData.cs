@@ -1,7 +1,7 @@
 ﻿using OpenToolkit.Mathematics;
 using System.Runtime.InteropServices;
 
-namespace VoxelCraft
+namespace VoxelCraft.Rendering
 {
     [StructLayout(LayoutKind.Sequential)]
     public struct StandardMeshVertexData
@@ -19,6 +19,12 @@ namespace VoxelCraft
         {
             new VertexAttributeEntry(3, OpenToolkit.Graphics.OpenGL4.VertexAttribPointerType.Double, false, sizeof(StandardMeshVertexData), 0),
             new VertexAttributeEntry(2, OpenToolkit.Graphics.OpenGL4.VertexAttribPointerType.Double, false, sizeof(StandardMeshVertexData), Vector3d.SizeInBytes)
+        };
+
+        public static VertexShaderAttributeEntry[] ShaderAttributes = new VertexShaderAttributeEntry[]
+        {
+            new VertexShaderAttributeEntry("position"),
+            new VertexShaderAttributeEntry("textureCoord")
         };
     }
 }

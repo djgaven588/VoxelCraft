@@ -1,6 +1,6 @@
 ﻿using OpenToolkit.Graphics.OpenGL4;
 
-namespace VoxelCraft
+namespace VoxelCraft.Rendering
 {
     public struct Mesh
     {
