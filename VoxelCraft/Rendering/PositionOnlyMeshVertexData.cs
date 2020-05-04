@@ -1,4 +1,5 @@
-﻿using OpenToolkit.Mathematics;
+﻿using OpenToolkit.Graphics.OpenGL4;
+using OpenToolkit.Mathematics;
 using System.Runtime.InteropServices;
 
 namespace VoxelCraft.Rendering
@@ -15,7 +16,7 @@ namespace VoxelCraft.Rendering
 
         public unsafe static VertexAttributeEntry[] Attributes = new VertexAttributeEntry[]
         {
-            new VertexAttributeEntry(3, OpenToolkit.Graphics.OpenGL4.VertexAttribPointerType.Double, false, sizeof(PositionOnlyMeshVertexData), 0),
+            new VertexAttributeEntry(3, VertexAttribPointerType.Double, 0, false, sizeof(PositionOnlyMeshVertexData), 0, false),
         };
 
         public static VertexShaderAttributeEntry[] ShaderAttributes = new VertexShaderAttributeEntry[]

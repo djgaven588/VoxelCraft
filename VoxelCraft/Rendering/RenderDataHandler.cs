@@ -163,6 +163,46 @@ namespace VoxelCraft.Rendering
         }
 
         /// <summary>
+        /// Loads a texture array
+        /// </summary>
+        /// <param name="filepath">The individual files of the texture array</param>
+        /// <returns></returns>
+        public static int LoadTextureArray(string[] files, int width, int height)
+        {
+            int textureID = GenerateTexture();
+            GL.BindTexture(TextureTarget.Texture2DArray, textureID);
+            GL.TexStorage3D(TextureTarget3d.Texture2DArray, 1, SizedInternalFormat.Rgba32f, width, height, files.Length);
+
+            try
+            {
+                for (int i = 0; i < files.Length; i++)
+                {
+                    Bitmap bitmap = new Bitmap(files[i]);
+
+                    BitmapData data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
+                    GL.TexSubImage3D(TextureTarget.Texture2DArray, 0, 0, 0, i, width, height, 1, OpenToolkit.Graphics.OpenGL4.PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
+                    
+                    bitmap.UnlockBits(data);
+                    bitmap.Dispose();
+                }
+            }
+            catch (IOException e)
+            {
+                Debug.Log(e);
+                return 0;
+            }
+
+            GL.TexParameterI(TextureTarget.Texture2DArray, TextureParameterName.TextureMinFilter, new int[] { (int)TextureMinFilter.Nearest });
+            GL.TexParameterI(TextureTarget.Texture2DArray, TextureParameterName.TextureMagFilter, new int[] { (int)TextureMagFilter.Nearest });
+
+            GL.TexParameterI(TextureTarget.Texture2DArray, TextureParameterName.TextureWrapS, new int[] { (int)TextureWrapMode.ClampToEdge });
+            GL.TexParameterI(TextureTarget.Texture2DArray, TextureParameterName.TextureWrapT, new int[] { (int)TextureWrapMode.ClampToEdge });
+
+            return textureID;
+        }
+
+        /// <summary>
         /// Generates a texture, this texture is not initialized.
         /// </summary>
         /// <returns></returns>

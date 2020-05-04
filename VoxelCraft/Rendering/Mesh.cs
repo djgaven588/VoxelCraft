@@ -3,7 +3,7 @@ using System;
 
 namespace VoxelCraft.Rendering
 {
-    public struct Mesh
+    public class Mesh
     {
         public int VAOBuffer { get; private set; }
         public int VertexBuffer { get; private set; }
@@ -14,13 +14,15 @@ namespace VoxelCraft.Rendering
 
         public VertexAttributeEntry[] AttributeData { get; private set; }
 
-        public Mesh(int vaoBuff, int vertexBuff, int indicieBuffer, int vertexCount, int indiceCount, VertexAttributeEntry[] attributes)
+        public Mesh(int vaoBuff, int vertexBuff, int indicieBuffer, VertexAttributeEntry[] attributes)
         {
             VAOBuffer = vaoBuff;
             VertexBuffer = vertexBuff;
             IndiceBuffer = indicieBuffer;
-            VertexCount = vertexCount;
-            IndiceCount = indiceCount;
+
+            VertexCount = 0;
+            IndiceCount = 0;
+
             AttributeData = attributes;
 
             GL.BindVertexArray(VAOBuffer);
@@ -30,7 +32,15 @@ namespace VoxelCraft.Rendering
             for (int i = 0; i < AttributeData.Length; i++)
             {
                 GL.EnableVertexAttribArray(i);
-                GL.VertexAttribPointer(i, AttributeData[i].Size, AttributeData[i].Type, AttributeData[i].Normalized, AttributeData[i].Stride, AttributeData[i].Offset);
+
+                if (AttributeData[i].IsInteger)
+                {
+                    GL.VertexAttribIPointer(i, AttributeData[i].Size, AttributeData[i].IntegerType, AttributeData[i].Stride, new IntPtr(AttributeData[i].Offset));
+                }
+                else
+                {
+                    GL.VertexAttribPointer(i, AttributeData[i].Size, AttributeData[i].FloatType, AttributeData[i].Normalized, AttributeData[i].Stride, AttributeData[i].Offset);
+                }
             }
 
             GL.BindVertexArray(0);
@@ -65,9 +75,9 @@ namespace VoxelCraft.Rendering
             IndiceBuffer = -1;
         }
 
-        public static Mesh GenerateMesh(int vertCount, int indicieCount, VertexAttributeEntry[] attributes)
+        public static Mesh GenerateMesh(VertexAttributeEntry[] attributes)
         {
-            return new Mesh(RenderDataHandler.GenerateVAO(), RenderDataHandler.GenerateVBO(), RenderDataHandler.GenerateVBO(), vertCount, indicieCount, attributes);
+            return new Mesh(RenderDataHandler.GenerateVAO(), RenderDataHandler.GenerateVBO(), RenderDataHandler.GenerateVBO(), attributes);
         }
 
         public override bool Equals(object obj)

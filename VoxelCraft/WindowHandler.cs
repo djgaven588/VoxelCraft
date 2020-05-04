@@ -27,6 +27,8 @@ namespace VoxelCraft
 
         protected override void OnLoad()
         {
+            IsFocused = true;
+            PrimitiveMeshes.Init();
             _onLoad?.Invoke();
         }
 
@@ -52,6 +54,7 @@ namespace VoxelCraft
         protected override void OnRenderFrame(FrameEventArgs args)
         {
             Graphics.ClearQueue();
+            InputManager.UpdateInput(this);
             _onRender?.Invoke(args);
 
             SwapBuffers();

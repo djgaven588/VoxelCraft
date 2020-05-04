@@ -1,0 +1,18 @@
+﻿#version 400 core
+
+in uint data;
+
+uniform mat4 viewProjectionMatrix;
+uniform mat4 worldTransformMatrix;
+
+out vec3 pass_textureCoords;
+
+void main()
+{
+    vec3 position = vec3(data & 0x3Fu, data >> 6u & 0x3Fu, data >> 12 & 0x3Fu);
+    gl_Position = viewProjectionMatrix * worldTransformMatrix * vec4(position.xy, -position.z, 1.0);
+
+    uint corner = uint(data >> 21u & 0x3u);
+
+    pass_textureCoords = vec3(corner >> 1, 1 - ((corner + 1) >> 1 & 1), data >> 23u & 0xFFFFu);
+}

@@ -1,6 +1,7 @@
 ﻿using OpenToolkit.Graphics.OpenGL4;
 using OpenToolkit.Mathematics;
 using OpenToolkit.Windowing.Common;
+using OpenToolkit.Windowing.Common.Input;
 using OpenToolkit.Windowing.Desktop;
 using System;
 using VoxelCraft.Rendering;
@@ -31,11 +32,9 @@ namespace VoxelCraft
                 APIVersion = new Version(4, 0),
                 Title = "Voxel Craft",
                 Size = new Vector2i(windowWidth, windowHeight)
-            }, OnLoad, null, OnResize, null, OnRender).Run();
+            }, OnLoad, OnClosed, OnResize, null, OnRender).Run();
         }
 
-        private static Mesh testMesh;
-        private static Mesh skyboxMesh;
         private static Material material;
         private static Material skyboxMat;
 
@@ -45,66 +44,15 @@ namespace VoxelCraft
 
         private static Matrix4 projectionMatrix;
 
+        private static Quaterniond cameraRot;
+        private static Vector3d cameraPos = new Vector3d(0, 0, 5);
+        private static ChunkData chunk = new ChunkData(new Coordinate(0));
+        private static Material chunkMat;
+
+        //private static World world;
+
         private static void OnLoad()
         {
-            testMesh = Mesh.GenerateMesh(0, 0, StandardMeshVertexData.Attributes);
-
-            testMesh.UploadMeshData(new StandardMeshVertexData[] {
-                new StandardMeshVertexData(new Vector3d(-0.25,  0.25, 0), new Vector2d(0, 0)),
-                new StandardMeshVertexData(new Vector3d(0.25,   0.25, 0), new Vector2d(1, 0)),
-                new StandardMeshVertexData(new Vector3d(0.25,  -0.25, 0), new Vector2d(1, 1)),
-                new StandardMeshVertexData(new Vector3d(-0.25, -0.25, 0), new Vector2d(0, 1))
-            }, 4, new uint[] { 0, 1, 2, 2, 3, 0 }, 6);
-
-            skyboxMesh = Mesh.GenerateMesh(0, 0, PositionOnlyMeshVertexData.Attributes);
-
-            skyboxMesh.UploadMeshData(new PositionOnlyMeshVertexData[] {
-                // Front
-                new PositionOnlyMeshVertexData(new Vector3d(-1, 1, -1)),
-                new PositionOnlyMeshVertexData(new Vector3d(1, 1, -1)),
-                new PositionOnlyMeshVertexData(new Vector3d(1, -1, -1)),
-                new PositionOnlyMeshVertexData(new Vector3d(-1, -1, -1)),
-
-                // Back
-                new PositionOnlyMeshVertexData(new Vector3d(1, 1, 1)),
-                new PositionOnlyMeshVertexData(new Vector3d(-1, 1, 1)),
-                new PositionOnlyMeshVertexData(new Vector3d(-1, -1, 1)),
-                new PositionOnlyMeshVertexData(new Vector3d(1, -1, 1)),
-
-                // Left
-                new PositionOnlyMeshVertexData(new Vector3d(-1, 1, 1)),
-                new PositionOnlyMeshVertexData(new Vector3d(-1, 1, -1)),
-                new PositionOnlyMeshVertexData(new Vector3d(-1, -1, -1)),
-                new PositionOnlyMeshVertexData(new Vector3d(-1, -1, 1)),
-
-                // Right
-                new PositionOnlyMeshVertexData(new Vector3d(1, 1, -1)),
-                new PositionOnlyMeshVertexData(new Vector3d(1, 1, 1)),
-                new PositionOnlyMeshVertexData(new Vector3d(1, -1, 1)),
-                new PositionOnlyMeshVertexData(new Vector3d(1, -1, -1)),
-
-                // Top
-                new PositionOnlyMeshVertexData(new Vector3d(-1, 1, 1)),
-                new PositionOnlyMeshVertexData(new Vector3d(1, 1, 1)),
-                new PositionOnlyMeshVertexData(new Vector3d(1, 1, -1)),
-                new PositionOnlyMeshVertexData(new Vector3d(-1, 1, -1)),
-
-                // Bottom
-                new PositionOnlyMeshVertexData(new Vector3d(1, -1, 1)),
-                new PositionOnlyMeshVertexData(new Vector3d(-1, -1, 1)),
-                new PositionOnlyMeshVertexData(new Vector3d(-1, -1, -1)),
-                new PositionOnlyMeshVertexData(new Vector3d(1, -1, -1)),
-            }, 24, new uint[] {
-                0, 1, 2, 2, 3, 0,
-                4, 5, 6, 6, 7, 4,
-
-                8, 9, 10, 10, 11, 8,
-                12, 13, 14, 14, 15, 12,
-
-                16, 17, 18, 18, 19, 16,
-                20, 21, 22, 22, 23, 20
-            }, 36);
-
             material = new Material(RenderDataHandler.GenerateProgram("./Rendering/Shaders/vertex.txt", "./Rendering/Shaders/fragment.txt", StandardMeshVertexData.ShaderAttributes), RenderDataHandler.LoadTexture("Tree.png"));
             skyboxMat = new SkyboxMaterial(RenderDataHandler.GenerateProgram("./Rendering/Shaders/skyboxVert.txt", "./Rendering/Shaders/skyboxFrag.txt", PositionOnlyMeshVertexData.ShaderAttributes),
                 RenderDataHandler.LoadCubeMap(new string[] {
@@ -113,7 +61,27 @@ namespace VoxelCraft
                     "./Artwork/Skybox/front.png", "./Artwork/Skybox/back.png"
                 }));
 
+            chunkMat = new Material(RenderDataHandler.GenerateProgram("chunkVertex.txt", "chunkFragment.txt", ChunkBlockVertexData.ShaderAttributes), RenderDataHandler.LoadTextureArray(new string[] { "./Artwork/GrassTop.png", "./Artwork/GrassSide.png", "./Artwork/Dirt.png" }, 16, 16));
+
+            chunk.GeneratedMesh = Mesh.GenerateMesh(ChunkBlockVertexData.Attributes);
+            ChunkTerrainGenerator.GenerateTerrain(ref chunk);
+            ChunkMeshGenerator generator = new ChunkMeshGenerator();
+            generator.RunJob(ref chunk, null);
+            generator.FinishMeshGeneration(chunk.GeneratedMesh);
+
             GL.ClearColor(Color4.CornflowerBlue);
+
+            GL.Enable(EnableCap.DepthTest);
+
+            GL.Enable(EnableCap.CullFace);
+            GL.CullFace(CullFaceMode.Back);
+
+            GL.FrontFace(FrontFaceDirection.Cw);
+        }
+
+        private static void OnClosed()
+        {
+
         }
 
         private static void OnResize(ResizeEventArgs e)
@@ -125,24 +93,38 @@ namespace VoxelCraft
             projectionMatrix = Matrix4.CreatePerspectiveFieldOfView((float)Mathmatics.ConvertToRadians(60), (float)aspectRatio, 0.01f, 1000);
         }
 
-        private static double totalTime = 0;
+        private static double XRot;
+        private static double YRot;
         private static void OnRender(FrameEventArgs args)
         {
-            totalTime += args.Time;
-            GL.Enable(EnableCap.DepthTest);
+            double xAxis = InputManager.IsKeyDown(Key.D) && !InputManager.IsKeyDown(Key.A) ? 1 : !InputManager.IsKeyDown(Key.D) && InputManager.IsKeyDown(Key.A) ? -1 : 0;
+            double yAxis = InputManager.IsKeyDown(Key.Space) && !InputManager.IsKeyDown(Key.ShiftLeft) ? 1 : !InputManager.IsKeyDown(Key.Space) && InputManager.IsKeyDown(Key.ShiftLeft) ? -1 : 0;
+            double zAxis = -(InputManager.IsKeyDown(Key.W) && !InputManager.IsKeyDown(Key.S) ? 1 : !InputManager.IsKeyDown(Key.W) && InputManager.IsKeyDown(Key.S) ? -1 : 0);
+
+            double yRotation = InputManager.IsKeyDown(Key.E) && !InputManager.IsKeyDown(Key.Q) ? 1 : !InputManager.IsKeyDown(Key.E) && InputManager.IsKeyDown(Key.Q) ? -1 : 0;
+            double xRotation = InputManager.IsKeyDown(Key.Z) && !InputManager.IsKeyDown(Key.X) ? 1 : !InputManager.IsKeyDown(Key.Z) && InputManager.IsKeyDown(Key.X) ? -1 : 0;
+
+            XRot += xRotation * args.Time;
+            YRot += yRotation * args.Time;
+
+            cameraRot = Quaterniond.FromEulerAngles(0, 0, XRot) * Quaterniond.FromEulerAngles(0, YRot, 0);
+            cameraPos += cameraRot.Inverted() * new Vector3d(xAxis, yAxis, zAxis) * args.Time * 4;
+
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            Matrix4 viewMatrix = Mathmatics.CreateViewMatrix(Vector3d.Zero, Quaterniond.FromEulerAngles(new Vector3d(0, Mathmatics.ConvertToRadians(totalTime * 45), 0)));
+            Matrix4 viewMatrix = Mathmatics.CreateViewMatrix(cameraPos, cameraRot);
 
             Graphics.UpdateCameraMatrix(viewMatrix * projectionMatrix);
 
             // Quad
-            Graphics.QueueDraw(material, testMesh, Mathmatics.CreateTransformationMatrix(new Vector3d(0, 0, -1.5), Quaterniond.Identity, Vector3d.One));
+            Graphics.QueueDraw(material, PrimitiveMeshes.Quad, Mathmatics.CreateTransformationMatrix(new Vector3d(0, 0, 1.5), Quaterniond.Identity, Vector3d.One));
+
+            Graphics.QueueDraw(chunkMat, chunk.GeneratedMesh, Mathmatics.CreateTransformationMatrix(Vector3d.Zero, Quaterniond.Identity, Vector3d.One));
 
             Graphics.HandleQueue();
 
             // Skybox
-            Graphics.DrawNow(skyboxMat, skyboxMesh, new Matrix4(new Matrix3(viewMatrix)) * projectionMatrix, Matrix4.Identity);
+            Graphics.DrawNow(skyboxMat, PrimitiveMeshes.Skybox, new Matrix4(new Matrix3(viewMatrix)) * projectionMatrix, Matrix4.Identity);
         }
     }
 }
