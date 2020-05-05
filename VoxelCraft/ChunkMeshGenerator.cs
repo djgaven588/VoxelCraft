@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System.Runtime.CompilerServices;
+using System.Threading;
 using VoxelCraft.Rendering;
 
 namespace VoxelCraft
@@ -29,9 +30,9 @@ namespace VoxelCraft
                     continue;
                 }
 
-                blockPosX = i % ChunkData.CHUNK_SIZE;
-                blockPosY = i / ChunkData.CHUNK_SIZE % ChunkData.CHUNK_SIZE;
-                blockPosZ = i / (ChunkData.CHUNK_SIZE * ChunkData.CHUNK_SIZE);
+                blockPosX = i & ChunkData.CHUNK_SIZE_MINUS_ONE;
+                blockPosY = i >> ChunkData.CHUNK_LOG_SIZE & ChunkData.CHUNK_SIZE_MINUS_ONE;
+                blockPosZ = i >> ChunkData.CHUNK_LOG_SIZE_2;
 
                 for (uint k = 0; k < 6; k++)
                 {
@@ -72,7 +73,7 @@ namespace VoxelCraft
 
                     for (uint j = 0; j < 4; j++)
                     {
-                        // X, Y, Z (6 bits each), normal index (3 bits), vertex index (2 bits, for texture mapping), texture index (
+                        // X, Y, Z (6 bits each), normal index (3 bits), vertex index (2 bits, for texture mapping), texture index
                         VertexBuffer[vertexCount++].Data =    (Face_Data[(k * 4) + j].X + blockPosX)
                                                            | ((Face_Data[(k * 4) + j].Y + blockPosY) << 6)
                                                            | ((Face_Data[(k * 4) + j].Z + blockPosZ) << 12)

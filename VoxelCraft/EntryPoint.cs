@@ -4,6 +4,7 @@ using OpenToolkit.Windowing.Common;
 using OpenToolkit.Windowing.Common.Input;
 using OpenToolkit.Windowing.Desktop;
 using System;
+using System.Diagnostics;
 using VoxelCraft.Rendering;
 
 namespace VoxelCraft
@@ -53,8 +54,8 @@ namespace VoxelCraft
 
         private static void OnLoad()
         {
-            material = new Material(RenderDataHandler.GenerateProgram("./Rendering/Shaders/vertex.txt", "./Rendering/Shaders/fragment.txt", StandardMeshVertexData.ShaderAttributes), RenderDataHandler.LoadTexture("Tree.png"));
-            skyboxMat = new SkyboxMaterial(RenderDataHandler.GenerateProgram("./Rendering/Shaders/skyboxVert.txt", "./Rendering/Shaders/skyboxFrag.txt", PositionOnlyMeshVertexData.ShaderAttributes),
+            material = new Material(RenderDataHandler.GenerateProgram("./Engine/Rendering/Shaders/vertex.txt", "./Engine/Rendering/Shaders/fragment.txt", StandardMeshVertexData.ShaderAttributes), RenderDataHandler.LoadTexture("./Artwork/Tree.png"));
+            skyboxMat = new SkyboxMaterial(RenderDataHandler.GenerateProgram("./Engine/Rendering/Shaders/skyboxVert.txt", "./Engine/Rendering/Shaders/skyboxFrag.txt", PositionOnlyMeshVertexData.ShaderAttributes),
                 RenderDataHandler.LoadCubeMap(new string[] {
                     "./Artwork/Skybox/right.png", "./Artwork/Skybox/left.png",
                     "./Artwork/Skybox/top.png", "./Artwork/Skybox/bottom.png",
@@ -67,6 +68,7 @@ namespace VoxelCraft
             ChunkTerrainGenerator.GenerateTerrain(ref chunk);
             ChunkMeshGenerator generator = new ChunkMeshGenerator();
             generator.RunJob(ref chunk, null);
+            
             generator.FinishMeshGeneration(chunk.GeneratedMesh);
 
             GL.ClearColor(Color4.CornflowerBlue);
