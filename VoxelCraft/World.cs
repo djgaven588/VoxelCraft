@@ -10,7 +10,7 @@ namespace VoxelCraft
         public static ConcurrentDictionary<Coordinate, ChunkData> LoadedChunks = new ConcurrentDictionary<Coordinate, ChunkData>();
         public static Coordinate WorldCenter;
         public static Material ChunkMaterial;
-        public static int RenderDistance = 1;
+        public static int RenderDistance = 4;
 
         public static void UpdateWorld()
         {

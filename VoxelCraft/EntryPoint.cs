@@ -4,6 +4,7 @@ using OpenToolkit.Windowing.Common;
 using OpenToolkit.Windowing.Common.Input;
 using OpenToolkit.Windowing.Desktop;
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using VoxelCraft.Rendering;
@@ -34,7 +35,7 @@ namespace VoxelCraft
                 APIVersion = new Version(4, 0),
                 Title = "Voxel Craft",
                 Size = new Vector2i(windowWidth, windowHeight)
-            }, OnLoad, OnClosed, OnResize, null, OnRender).Run();
+            }, OnLoad, OnClosed, OnClosing, OnResize, null, OnRender).Run();
         }
 
         private static Material material;
@@ -48,8 +49,6 @@ namespace VoxelCraft
 
         private static Quaterniond cameraRot;
         private static Vector3d cameraPos = new Vector3d(0, 0, 5);
-        //private static ChunkData chunk = new ChunkData(new Coordinate(0));
-        //private static ChunkData chunk2 = new ChunkData(new Coordinate(1));
         private static Material chunkMat;
 
         private static DebugProc debugCallback;
@@ -71,20 +70,6 @@ namespace VoxelCraft
             chunkMat = new ChunkMaterial(RenderDataHandler.GenerateProgram("chunkVertex.txt", "chunkFragment.txt", ChunkBlockVertexData.ShaderAttributes), RenderDataHandler.LoadTextureArray(new string[] { "./Artwork/GrassTop.png", "./Artwork/GrassSide.png", "./Artwork/Dirt.png" }, 16, 16));
 
             World.ChunkMaterial = chunkMat;
-
-            //chunk.GeneratedMesh = Mesh.GenerateMesh(ChunkBlockVertexData.Attributes);
-            //ChunkTerrainGenerator.GenerateTerrain(ref chunk);
-            //ChunkOperationDispatcher.DispatchMeshGeneration(ref chunk, null);
-            //generator = new ChunkMeshGenerator();
-            //generator.RunJob(ref chunk, null);
-            
-            //generator.FinishMeshGeneration(chunk.GeneratedMesh);
-
-            //chunk2.GeneratedMesh = Mesh.GenerateMesh(ChunkBlockVertexData.Attributes);
-            //ChunkTerrainGenerator.GenerateTerrain(ref chunk2);
-            //ChunkOperationDispatcher.DispatchMeshGeneration(ref chunk2, null);
-            //generator.RunJob(ref chunk2, null);
-            //generator.FinishMeshGeneration(chunk2.GeneratedMesh);
 
             GL.ClearColor(Color4.CornflowerBlue);
 
@@ -144,12 +129,6 @@ namespace VoxelCraft
         private static double YRot;
         private static void OnRender(FrameEventArgs args)
         {
-            ErrorCode error;
-            while ((error = GL.GetError()) != ErrorCode.NoError)
-            {
-                Debug.Log(error);
-            }
-
             double xAxis = InputManager.IsKeyDown(Key.D) && !InputManager.IsKeyDown(Key.A) ? 1 : !InputManager.IsKeyDown(Key.D) && InputManager.IsKeyDown(Key.A) ? -1 : 0;
             double yAxis = InputManager.IsKeyDown(Key.Space) && !InputManager.IsKeyDown(Key.ShiftLeft) ? 1 : !InputManager.IsKeyDown(Key.Space) && InputManager.IsKeyDown(Key.ShiftLeft) ? -1 : 0;
             double zAxis = -(InputManager.IsKeyDown(Key.W) && !InputManager.IsKeyDown(Key.S) ? 1 : !InputManager.IsKeyDown(Key.W) && InputManager.IsKeyDown(Key.S) ? -1 : 0);
@@ -157,11 +136,11 @@ namespace VoxelCraft
             double yRotation = InputManager.IsKeyDown(Key.E) && !InputManager.IsKeyDown(Key.Q) ? 1 : !InputManager.IsKeyDown(Key.E) && InputManager.IsKeyDown(Key.Q) ? -1 : 0;
             double xRotation = InputManager.IsKeyDown(Key.Z) && !InputManager.IsKeyDown(Key.X) ? 1 : !InputManager.IsKeyDown(Key.Z) && InputManager.IsKeyDown(Key.X) ? -1 : 0;
 
-            XRot += xRotation * args.Time;
-            YRot += yRotation * args.Time;
+            XRot += xRotation * args.Time * 2;
+            YRot += yRotation * args.Time * 2;
 
             cameraRot = Quaterniond.FromEulerAngles(0, 0, XRot) * Quaterniond.FromEulerAngles(0, YRot, 0);
-            cameraPos += cameraRot.Inverted() * new Vector3d(xAxis, yAxis, zAxis) * args.Time * 4;
+            cameraPos += cameraRot.Inverted() * new Vector3d(xAxis, yAxis, zAxis) * args.Time * 8;
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
@@ -171,18 +150,18 @@ namespace VoxelCraft
 
             World.UpdateWorld();
 
-            //ChunkOperationDispatcher.RunActionsWaitingForMainThread();
-
             // Quad
             Graphics.QueueDraw(material, PrimitiveMeshes.Quad, Mathmatics.CreateTransformationMatrix(new Vector3d(0, 0, 1.5), Quaterniond.Identity, Vector3d.One));
-            //Graphics.QueueDraw(material, PrimitiveMeshes.Quad2, Mathmatics.CreateTransformationMatrix(new Vector3d(-1, 0, 1.5), Quaterniond.Identity, Vector3d.One));
-            //Graphics.QueueDraw(chunkMat, chunk.GeneratedMesh, Mathmatics.CreateTransformationMatrix(Vector3d.Zero, Quaterniond.Identity, Vector3d.One));
-            //Graphics.QueueDraw(chunkMat, chunk2.GeneratedMesh, Mathmatics.CreateTransformationMatrix(Vector3d.One * ChunkData.CHUNK_SIZE, Quaterniond.Identity, Vector3d.One));
 
             Graphics.HandleQueue();
 
             // Skybox
             Graphics.DrawNow(skyboxMat, PrimitiveMeshes.Skybox, new Matrix4(new Matrix3(viewMatrix)) * projectionMatrix, Matrix4.Identity);
+        }
+
+        private static void OnClosing(CancelEventArgs e)
+        {
+            ChunkOperationDispatcher.ShutdownThreads();
         }
     }
 }

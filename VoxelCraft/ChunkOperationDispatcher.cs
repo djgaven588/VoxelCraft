@@ -9,7 +9,7 @@ namespace VoxelCraft
 {
     public static class ChunkOperationDispatcher
     {
-        private static readonly SemaphoreSlim semaphore = new SemaphoreSlim(0, int.MaxValue);
+        private static readonly SemaphoreSlim jobSemaphore = new SemaphoreSlim(0, int.MaxValue);
         private static readonly Thread[] jobThreads = new Thread[Environment.ProcessorCount - 1];
 
         private static readonly ConcurrentQueue<(ChunkData chunk, ChunkData[] neighbors)> meshJobs = new ConcurrentQueue<(ChunkData, ChunkData[])>();
@@ -21,6 +21,7 @@ namespace VoxelCraft
         private static int activeMeshGenerators = 0;
 
         private static readonly ConcurrentQueue<string> debugMessages = new ConcurrentQueue<string>();
+        private static bool shutdownThreads = false;
 
         public const int MAX_MESH_GENERATORS = 32;
 
@@ -33,11 +34,17 @@ namespace VoxelCraft
             }
         }
 
+        public static void ShutdownThreads()
+        {
+            shutdownThreads = true;
+            jobSemaphore.Release(Environment.ProcessorCount - 1);
+        }
+
         private static void ThreadLoop()
         {
-            while (true)
+            while (!shutdownThreads)
             {
-                semaphore.Wait();
+                jobSemaphore.Wait();
 
                 if (activeMeshGenerators < MAX_MESH_GENERATORS && meshJobs.TryDequeue(out (ChunkData chunk, ChunkData[] neighbors) meshJob))
                 {
@@ -64,7 +71,7 @@ namespace VoxelCraft
                 }
                 else if(activeMeshGenerators >= MAX_MESH_GENERATORS && meshJobs.Count > 0)
                 {
-                    semaphore.Release(1);
+                    jobSemaphore.Release(1);
                 }
                 else if (terrainJobs.TryDequeue(out ChunkData chunkToGenerateTerrain))
                 {
@@ -88,21 +95,21 @@ namespace VoxelCraft
             chunkData.CurrentChunkOperation = ChunkData.ChunkStage.Generating_Mesh;
             chunkData.IsDirty = false;
             meshJobs.Enqueue((chunkData, neighbors));
-            semaphore.Release(1);
+            jobSemaphore.Release(1);
         }
 
         public static void DispatchTerrainGeneration(ref ChunkData chunkData)
         {
             chunkData.CurrentChunkOperation = ChunkData.ChunkStage.Generating_Terrain;
             terrainJobs.Enqueue(chunkData);
-            semaphore.Release(1);
+            jobSemaphore.Release(1);
         }
 
         public static void DispatchStructureGeneration(ref ChunkData chunkData)
         {
             chunkData.CurrentChunkOperation = ChunkData.ChunkStage.Generating_Structures;
             structureJobs.Enqueue(chunkData);
-            semaphore.Release(1);
+            jobSemaphore.Release(1);
         }
 
         public static void RunActionsWaitingForMainThread(long maxTimeInMS = 10)

@@ -2,6 +2,7 @@
 using OpenToolkit.Windowing.Common;
 using OpenToolkit.Windowing.Desktop;
 using System;
+using System.ComponentModel;
 using System.Threading;
 using VoxelCraft.Rendering;
 
@@ -14,13 +15,15 @@ namespace VoxelCraft
         private readonly Action<ResizeEventArgs> _onResize;
         private readonly Action<FrameEventArgs> _onUpdate;
         private readonly Action<FrameEventArgs> _onRender;
+        private readonly Action<CancelEventArgs> _onClosing;
 
         public WindowHandler(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings,
-            Action onLoad, Action onClosed, Action<ResizeEventArgs> onResize, Action<FrameEventArgs> onUpdate, Action<FrameEventArgs> onRender) : base(gameWindowSettings, nativeWindowSettings)
+            Action onLoad, Action onClosed, Action<CancelEventArgs> onClosing, Action<ResizeEventArgs> onResize, Action<FrameEventArgs> onUpdate, Action<FrameEventArgs> onRender) : base(gameWindowSettings, nativeWindowSettings)
         {
             _onLoad = onLoad;
             _onClosed = onClosed;
             _onResize = onResize;
+            _onClosing = onClosing;
             _onUpdate = onUpdate;
             _onRender = onRender;
         }
@@ -63,6 +66,11 @@ namespace VoxelCraft
             {
                 Thread.Sleep((int)(Math.Round(1000 / RenderFrequency - args.Time) * 0.9));
             }
+        }
+
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            _onClosing?.Invoke(e);
         }
     }
 }
