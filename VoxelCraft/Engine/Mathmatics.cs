@@ -11,7 +11,7 @@ namespace VoxelCraft
         {
             Matrix4 matrix = Matrix4.Identity;
 
-            translation *= -1;
+            translation.Z *= -1;
 
             matrix *= Matrix4.CreateFromQuaternion(new Quaternion((float)rotation.X, (float)rotation.Y, (float)rotation.Z, (float)rotation.W));
             matrix *= Matrix4.CreateScale((Vector3)scale);

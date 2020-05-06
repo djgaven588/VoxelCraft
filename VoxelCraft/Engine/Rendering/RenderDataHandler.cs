@@ -130,7 +130,7 @@ namespace VoxelCraft.Rendering
         public static int LoadCubeMap(string[] files)
         {
             int textureID = GenerateTexture();
-            GL.BindTexture(TextureTarget.Texture2D, textureID);
+            GL.BindTexture(TextureTarget.TextureCubeMap, textureID);
 
             try
             {

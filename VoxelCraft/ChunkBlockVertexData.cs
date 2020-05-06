@@ -11,7 +11,7 @@ namespace VoxelCraft
 
         public unsafe static VertexAttributeEntry[] Attributes = new VertexAttributeEntry[]
         {
-            new VertexAttributeEntry(1, 0, VertexAttribIntegerType.UnsignedInt, false, sizeof(ChunkBlockVertexData), 0, true)
+            new VertexAttributeEntry(1, 0, VertexAttribIntegerType.UnsignedInt, false, 0, 0, true)
         };
 
         public static VertexShaderAttributeEntry[] ShaderAttributes = new VertexShaderAttributeEntry[]

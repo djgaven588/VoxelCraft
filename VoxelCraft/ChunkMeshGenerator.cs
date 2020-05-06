@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using OpenToolkit.Graphics.OpenGL4;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using VoxelCraft.Rendering;
 
@@ -6,8 +7,8 @@ namespace VoxelCraft
 {
     public class ChunkMeshGenerator
     {
-        private readonly ChunkBlockVertexData[] VertexBuffer = new ChunkBlockVertexData[ChunkData.CHUNK_SIZE * ChunkData.CHUNK_SIZE * ChunkData.CHUNK_SIZE * 6 * 4];
-        private readonly uint[] IndiciesBuffer = new uint[ChunkData.CHUNK_SIZE * ChunkData.CHUNK_SIZE * ChunkData.CHUNK_SIZE * 12];
+        private readonly ChunkBlockVertexData[] VertexBuffer = new ChunkBlockVertexData[ChunkData.CHUNK_SIZE_CUBE * 6 * 4];
+        private readonly uint[] IndiciesBuffer = new uint[ChunkData.CHUNK_SIZE_CUBE * 12];
 
         private uint vertexCount = 0;
         private uint indiciesCount = 0;
@@ -37,11 +38,11 @@ namespace VoxelCraft
                 for (uint k = 0; k < 6; k++)
                 {
                     if ((k == 0 && !(blockPosZ == ChunkData.CHUNK_SIZE - 1 ?
-                                (!useNeighbors || neighbors[0] == null || (useNeighbors && (neighbors[0].BlockData[i - ChunkData.CHUNK_SIZE * ChunkData.CHUNK_SIZE * (ChunkData.CHUNK_SIZE - 1)].ExtraData >> 5 & 1) == 1)) :
+                                (!useNeighbors || neighbors[0] == null || (useNeighbors && (neighbors[0].BlockData[i - ChunkData.CHUNK_SIZE_SQR * (ChunkData.CHUNK_SIZE - 1)].ExtraData >> 5 & 1) == 1)) :
                                 (chunk.BlockData[i + ChunkData.CHUNK_SIZE * ChunkData.CHUNK_SIZE].ExtraData >> 5 & 1) == 1)) ||
 
                        (k == 1 && !(blockPosZ == 0 ?
-                                (!useNeighbors || neighbors[1] == null || (useNeighbors && (neighbors[1].BlockData[i + ChunkData.CHUNK_SIZE * ChunkData.CHUNK_SIZE * (ChunkData.CHUNK_SIZE - 1)].ExtraData >> 5 & 1) == 1)) :
+                                (!useNeighbors || neighbors[1] == null || (useNeighbors && (neighbors[1].BlockData[i + ChunkData.CHUNK_SIZE_SQR * (ChunkData.CHUNK_SIZE - 1)].ExtraData >> 5 & 1) == 1)) :
                                 (chunk.BlockData[i - ChunkData.CHUNK_SIZE * ChunkData.CHUNK_SIZE].ExtraData >> 5 & 1) == 1)) ||
 
                         (k == 2 && !(blockPosX == ChunkData.CHUNK_SIZE - 1 ?

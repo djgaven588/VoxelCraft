@@ -5,6 +5,7 @@ using OpenToolkit.Windowing.Common.Input;
 using OpenToolkit.Windowing.Desktop;
 using System;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using VoxelCraft.Rendering;
 
 namespace VoxelCraft
@@ -47,8 +48,13 @@ namespace VoxelCraft
 
         private static Quaterniond cameraRot;
         private static Vector3d cameraPos = new Vector3d(0, 0, 5);
-        private static ChunkData chunk = new ChunkData(new Coordinate(0));
+        //private static ChunkData chunk = new ChunkData(new Coordinate(0));
+        //private static ChunkData chunk2 = new ChunkData(new Coordinate(1));
         private static Material chunkMat;
+
+        private static DebugProc debugCallback;
+        private static GCHandle debugCallbackHandle;
+        private static ChunkMeshGenerator generator;
 
         //private static World world;
 
@@ -62,14 +68,23 @@ namespace VoxelCraft
                     "./Artwork/Skybox/front.png", "./Artwork/Skybox/back.png"
                 }));
 
-            chunkMat = new Material(RenderDataHandler.GenerateProgram("chunkVertex.txt", "chunkFragment.txt", ChunkBlockVertexData.ShaderAttributes), RenderDataHandler.LoadTextureArray(new string[] { "./Artwork/GrassTop.png", "./Artwork/GrassSide.png", "./Artwork/Dirt.png" }, 16, 16));
+            chunkMat = new ChunkMaterial(RenderDataHandler.GenerateProgram("chunkVertex.txt", "chunkFragment.txt", ChunkBlockVertexData.ShaderAttributes), RenderDataHandler.LoadTextureArray(new string[] { "./Artwork/GrassTop.png", "./Artwork/GrassSide.png", "./Artwork/Dirt.png" }, 16, 16));
 
-            chunk.GeneratedMesh = Mesh.GenerateMesh(ChunkBlockVertexData.Attributes);
-            ChunkTerrainGenerator.GenerateTerrain(ref chunk);
-            ChunkMeshGenerator generator = new ChunkMeshGenerator();
-            generator.RunJob(ref chunk, null);
+            World.ChunkMaterial = chunkMat;
+
+            //chunk.GeneratedMesh = Mesh.GenerateMesh(ChunkBlockVertexData.Attributes);
+            //ChunkTerrainGenerator.GenerateTerrain(ref chunk);
+            //ChunkOperationDispatcher.DispatchMeshGeneration(ref chunk, null);
+            //generator = new ChunkMeshGenerator();
+            //generator.RunJob(ref chunk, null);
             
-            generator.FinishMeshGeneration(chunk.GeneratedMesh);
+            //generator.FinishMeshGeneration(chunk.GeneratedMesh);
+
+            //chunk2.GeneratedMesh = Mesh.GenerateMesh(ChunkBlockVertexData.Attributes);
+            //ChunkTerrainGenerator.GenerateTerrain(ref chunk2);
+            //ChunkOperationDispatcher.DispatchMeshGeneration(ref chunk2, null);
+            //generator.RunJob(ref chunk2, null);
+            //generator.FinishMeshGeneration(chunk2.GeneratedMesh);
 
             GL.ClearColor(Color4.CornflowerBlue);
 
@@ -79,11 +94,41 @@ namespace VoxelCraft
             GL.CullFace(CullFaceMode.Back);
 
             GL.FrontFace(FrontFaceDirection.Cw);
+
+            debugCallback = DebugCallback;
+
+            debugCallbackHandle = GCHandle.Alloc(debugCallback);
+
+            GL.DebugMessageCallback(debugCallback, IntPtr.Zero);
+
+            GL.Enable(EnableCap.DebugOutput);
+            GL.Enable(EnableCap.DebugOutputSynchronous);
         }
 
         private static void OnClosed()
         {
 
+        }
+
+        private static void DebugCallback(DebugSource source,
+                                  DebugType type,
+                                  int id,
+                                  DebugSeverity severity,
+                                  int length,
+                                  IntPtr message,
+                                  IntPtr userParam)
+        {
+            string messageString = Marshal.PtrToStringAnsi(message, length);
+
+            if (type == DebugType.DebugTypeOther)
+                return;
+
+            Console.WriteLine($"{severity} {type} | {messageString}");
+
+            if (type == DebugType.DebugTypeError)
+            {
+                throw new Exception(messageString);
+            }
         }
 
         private static void OnResize(ResizeEventArgs e)
@@ -99,6 +144,12 @@ namespace VoxelCraft
         private static double YRot;
         private static void OnRender(FrameEventArgs args)
         {
+            ErrorCode error;
+            while ((error = GL.GetError()) != ErrorCode.NoError)
+            {
+                Debug.Log(error);
+            }
+
             double xAxis = InputManager.IsKeyDown(Key.D) && !InputManager.IsKeyDown(Key.A) ? 1 : !InputManager.IsKeyDown(Key.D) && InputManager.IsKeyDown(Key.A) ? -1 : 0;
             double yAxis = InputManager.IsKeyDown(Key.Space) && !InputManager.IsKeyDown(Key.ShiftLeft) ? 1 : !InputManager.IsKeyDown(Key.Space) && InputManager.IsKeyDown(Key.ShiftLeft) ? -1 : 0;
             double zAxis = -(InputManager.IsKeyDown(Key.W) && !InputManager.IsKeyDown(Key.S) ? 1 : !InputManager.IsKeyDown(Key.W) && InputManager.IsKeyDown(Key.S) ? -1 : 0);
@@ -118,10 +169,15 @@ namespace VoxelCraft
 
             Graphics.UpdateCameraMatrix(viewMatrix * projectionMatrix);
 
+            World.UpdateWorld();
+
+            //ChunkOperationDispatcher.RunActionsWaitingForMainThread();
+
             // Quad
             Graphics.QueueDraw(material, PrimitiveMeshes.Quad, Mathmatics.CreateTransformationMatrix(new Vector3d(0, 0, 1.5), Quaterniond.Identity, Vector3d.One));
-
-            Graphics.QueueDraw(chunkMat, chunk.GeneratedMesh, Mathmatics.CreateTransformationMatrix(Vector3d.Zero, Quaterniond.Identity, Vector3d.One));
+            //Graphics.QueueDraw(material, PrimitiveMeshes.Quad2, Mathmatics.CreateTransformationMatrix(new Vector3d(-1, 0, 1.5), Quaterniond.Identity, Vector3d.One));
+            //Graphics.QueueDraw(chunkMat, chunk.GeneratedMesh, Mathmatics.CreateTransformationMatrix(Vector3d.Zero, Quaterniond.Identity, Vector3d.One));
+            //Graphics.QueueDraw(chunkMat, chunk2.GeneratedMesh, Mathmatics.CreateTransformationMatrix(Vector3d.One * ChunkData.CHUNK_SIZE, Quaterniond.Identity, Vector3d.One));
 
             Graphics.HandleQueue();
 

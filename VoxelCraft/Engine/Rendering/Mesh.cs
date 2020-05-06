@@ -49,6 +49,8 @@ namespace VoxelCraft.Rendering
         public unsafe void UploadMeshData<T>(T[] vertices, int vertexCount, uint[] indicies, int indiciesCount) where T : unmanaged
         {
             GL.BindVertexArray(VAOBuffer);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, IndiceBuffer);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, VertexBuffer);
 
             GL.BufferData(BufferTarget.ElementArrayBuffer, sizeof(uint) * indiciesCount, indicies, BufferUsageHint.DynamicDraw);
             GL.BufferData(BufferTarget.ArrayBuffer, sizeof(T) * vertexCount, vertices, BufferUsageHint.DynamicDraw);

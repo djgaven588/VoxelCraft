@@ -42,6 +42,18 @@ namespace VoxelCraft
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Coordinate WorldToRegion()
+        {
+            return new Coordinate(X >> (ChunkData.CHUNK_LOG_SIZE + Region.REGION_LOG_SIZE), Y >> (ChunkData.CHUNK_LOG_SIZE + Region.REGION_LOG_SIZE), Z >> (ChunkData.CHUNK_LOG_SIZE + Region.REGION_LOG_SIZE));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Coordinate RegionToWorld()
+        {
+            return this * ChunkData.CHUNK_SIZE * Region.REGION_SIZE;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector3d ToVector()
         {
             return new Vector3d(X, Y, Z);

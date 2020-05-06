@@ -5,6 +5,7 @@ namespace VoxelCraft.Rendering
     public static class PrimitiveMeshes
     {
         public static Mesh Quad { get; private set; }
+        public static Mesh Quad2 { get; private set; }
         public static Mesh Skybox { get; private set; }
 
         public static void Init()
@@ -12,6 +13,15 @@ namespace VoxelCraft.Rendering
             Quad = Mesh.GenerateMesh(StandardMeshVertexData.Attributes);
 
             Quad.UploadMeshData(new StandardMeshVertexData[] {
+                new StandardMeshVertexData(new Vector3d(-0.5,  0.5, 0), new Vector2d(0, 0)),
+                new StandardMeshVertexData(new Vector3d( 0.5,  0.5, 0), new Vector2d(1, 0)),
+                new StandardMeshVertexData(new Vector3d( 0.5, -0.5, 0), new Vector2d(1, 1)),
+                new StandardMeshVertexData(new Vector3d(-0.5, -0.5, 0), new Vector2d(0, 1))
+            }, 4, new uint[] { 0, 1, 2, 2, 3, 0 }, 6);
+
+            Quad2 = Mesh.GenerateMesh(StandardMeshVertexData.Attributes);
+
+            Quad2.UploadMeshData(new StandardMeshVertexData[] {
                 new StandardMeshVertexData(new Vector3d(-0.5,  0.5, 0), new Vector2d(0, 0)),
                 new StandardMeshVertexData(new Vector3d( 0.5,  0.5, 0), new Vector2d(1, 0)),
                 new StandardMeshVertexData(new Vector3d( 0.5, -0.5, 0), new Vector2d(1, 1)),

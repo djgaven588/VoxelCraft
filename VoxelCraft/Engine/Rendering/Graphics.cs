@@ -13,25 +13,33 @@ namespace VoxelCraft.Rendering
         {
             foreach (KeyValuePair<Mesh, Dictionary<Material, Queue<Matrix4>>> entry in renderingQueue)
             {
-                GL.BindVertexArray(entry.Key.VAOBuffer);
+                Mesh meshToRender = entry.Key;
+                Dictionary<Material, Queue<Matrix4>> instances = entry.Value;
+                GL.BindVertexArray(meshToRender.VAOBuffer);
 
-                foreach (KeyValuePair<Material, Queue<Matrix4>> instanceEntry in entry.Value)
+                foreach (KeyValuePair<Material, Queue<Matrix4>> instanceEntry in instances)
                 {
-                    GL.UseProgram(instanceEntry.Key.ProgramID);
+                    Material mat = instanceEntry.Key;
+                    Matrix4[] rendInstances = new Matrix4[instanceEntry.Value.Count];
+                    instanceEntry.Value.CopyTo(rendInstances, 0);
 
-                    instanceEntry.Key.LoadMatrix4(instanceEntry.Key.ViewProjectionID, ViewProjectionMatrix);
+                    GL.UseProgram(mat.ProgramID);
 
-                    instanceEntry.Key.BeforeRenderGroup();
+                    mat.LoadMatrix4(mat.ViewProjectionID, ViewProjectionMatrix);
+
+                    mat.BeforeRenderGroup();
 
                     while (instanceEntry.Value.Count > 0)
                     {
-                        instanceEntry.Key.BeforeRenderIndividual();
-                        instanceEntry.Key.LoadMatrix4(instanceEntry.Key.WorldTransform, instanceEntry.Value.Dequeue());
-                        GL.DrawElements(BeginMode.Triangles, entry.Key.IndiceCount, DrawElementsType.UnsignedInt, 0);
-                        instanceEntry.Key.AfterRenderIndividual();
+                        mat.BeforeRenderIndividual();
+
+                        mat.LoadMatrix4(mat.WorldTransform, instanceEntry.Value.Dequeue());
+                        GL.DrawElements(BeginMode.Triangles, meshToRender.IndiceCount, DrawElementsType.UnsignedInt, 0);
+
+                        mat.AfterRenderIndividual();
                     }
 
-                    instanceEntry.Key.AfterRenderGroup();
+                    mat.AfterRenderGroup();
 
                     GL.UseProgram(0);
                 }
