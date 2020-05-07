@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 using System.Threading;
 
 namespace VoxelCraft
@@ -48,8 +46,7 @@ namespace VoxelCraft
 
                 if (activeMeshGenerators < MAX_MESH_GENERATORS && meshJobs.TryDequeue(out (ChunkData chunk, ChunkData[] neighbors) meshJob))
                 {
-                    ChunkMeshGenerator meshGenerator;
-                    if (!meshGeneratorPool.TryDequeue(out meshGenerator))
+                    if (!meshGeneratorPool.TryDequeue(out ChunkMeshGenerator meshGenerator))
                     {
                         meshGenerator = new ChunkMeshGenerator();
                     }
@@ -69,7 +66,7 @@ namespace VoxelCraft
                         activeMeshGenerators--;
                     });
                 }
-                else if(activeMeshGenerators >= MAX_MESH_GENERATORS && meshJobs.Count > 0)
+                else if (activeMeshGenerators >= MAX_MESH_GENERATORS && meshJobs.Count > 0)
                 {
                     jobSemaphore.Release(1);
                 }

@@ -7,7 +7,48 @@ namespace VoxelCraft.Rendering
     public static class Graphics
     {
         private static Matrix4 ViewProjectionMatrix;
+
+        private static Matrix4 ViewMatrix;
+        private static Matrix4 ProjectionMatrix;
+
         private static Dictionary<Mesh, Dictionary<Material, Queue<Matrix4>>> renderingQueue = new Dictionary<Mesh, Dictionary<Material, Queue<Matrix4>>>();
+        private static SkyboxMaterial SkyboxMaterial;
+
+        private static Camera Camera;
+
+        public static void Initialize(Color4 clearColor)
+        {
+            GL.ClearColor(clearColor);
+
+            GL.Enable(EnableCap.DepthTest);
+
+            GL.Enable(EnableCap.CullFace);
+            GL.CullFace(CullFaceMode.Back);
+
+            GL.FrontFace(FrontFaceDirection.Cw);
+        }
+
+        public static void BeforeRender()
+        {
+            if (Camera != null)
+            {
+                UpdateCameraMatrix(Mathmatics.CreateViewMatrix(Camera.cameraPos, Camera.cameraRot));
+            }
+            else
+            {
+                Debug.Log("Graphics.UseCamera needs to be called, there is no active camera!");
+            }
+        }
+
+        public static void UseSkybox(SkyboxMaterial skyboxMat)
+        {
+            SkyboxMaterial = skyboxMat;
+        }
+
+        public static void UseCamera(Camera camera)
+        {
+            Camera = camera;
+        }
 
         public static void HandleQueue()
         {
@@ -46,6 +87,11 @@ namespace VoxelCraft.Rendering
 
                 GL.BindVertexArray(0);
             }
+
+            if (SkyboxMaterial != null)
+            {
+                DrawNow(SkyboxMaterial, PrimitiveMeshes.Skybox, new Matrix4(new Matrix3(ViewMatrix)) * ProjectionMatrix, Matrix4.Identity);
+            }
         }
 
         public static void ClearQueue()
@@ -55,7 +101,14 @@ namespace VoxelCraft.Rendering
 
         public static void UpdateCameraMatrix(Matrix4 newMatrix)
         {
-            ViewProjectionMatrix = newMatrix;
+            ViewMatrix = newMatrix;
+            ViewProjectionMatrix = ViewMatrix * ProjectionMatrix;
+        }
+
+        public static void UpdateProjectionMatrix(Matrix4 newMatrix)
+        {
+            ProjectionMatrix = newMatrix;
+            ViewProjectionMatrix = ViewMatrix * ProjectionMatrix;
         }
 
         public static void DrawNow(Material material, Mesh mesh, Matrix4 viewProjectionMatrix, Matrix4 transformMatrix)

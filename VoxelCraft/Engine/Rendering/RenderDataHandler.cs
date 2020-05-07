@@ -1,4 +1,5 @@
 ﻿using OpenToolkit.Graphics.OpenGL4;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -169,9 +170,10 @@ namespace VoxelCraft.Rendering
         /// <returns></returns>
         public static int LoadTextureArray(string[] files, int width, int height)
         {
+            int mipmapLevels = 1 + (int)Math.Floor(Math.Log2(Math.Max(width, height)));
             int textureID = GenerateTexture();
             GL.BindTexture(TextureTarget.Texture2DArray, textureID);
-            GL.TexStorage3D(TextureTarget3d.Texture2DArray, 1, SizedInternalFormat.Rgba32f, width, height, files.Length);
+            GL.TexStorage3D(TextureTarget3d.Texture2DArray, mipmapLevels, SizedInternalFormat.Rgba32f, width, height, files.Length);
 
             try
             {
@@ -182,7 +184,7 @@ namespace VoxelCraft.Rendering
                     BitmapData data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 
                     GL.TexSubImage3D(TextureTarget.Texture2DArray, 0, 0, 0, i, width, height, 1, OpenToolkit.Graphics.OpenGL4.PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
-                    
+
                     bitmap.UnlockBits(data);
                     bitmap.Dispose();
                 }
@@ -193,7 +195,12 @@ namespace VoxelCraft.Rendering
                 return 0;
             }
 
-            GL.TexParameterI(TextureTarget.Texture2DArray, TextureParameterName.TextureMinFilter, new int[] { (int)TextureMinFilter.Nearest });
+            GL.GenerateTextureMipmap(textureID);
+
+            GL.TexParameterI(TextureTarget.Texture2DArray, TextureParameterName.TextureBaseLevel, new int[] { 0 });
+            GL.TexParameterI(TextureTarget.Texture2DArray, TextureParameterName.TextureMaxLevel, new int[] { mipmapLevels });
+
+            GL.TexParameterI(TextureTarget.Texture2DArray, TextureParameterName.TextureMinFilter, new int[] { (int)TextureMinFilter.NearestMipmapLinear });
             GL.TexParameterI(TextureTarget.Texture2DArray, TextureParameterName.TextureMagFilter, new int[] { (int)TextureMagFilter.Nearest });
 
             GL.TexParameterI(TextureTarget.Texture2DArray, TextureParameterName.TextureWrapS, new int[] { (int)TextureWrapMode.ClampToEdge });

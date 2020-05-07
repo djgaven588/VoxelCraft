@@ -1,7 +1,4 @@
-﻿using OpenToolkit.Graphics.OpenGL4;
-using System.Runtime.CompilerServices;
-using System.Threading;
-using VoxelCraft.Rendering;
+﻿using VoxelCraft.Rendering;
 
 namespace VoxelCraft
 {
@@ -75,7 +72,7 @@ namespace VoxelCraft
                     for (uint j = 0; j < 4; j++)
                     {
                         // X, Y, Z (6 bits each), normal index (3 bits), vertex index (2 bits, for texture mapping), texture index
-                        VertexBuffer[vertexCount++].Data =    (Face_Data[(k * 4) + j].X + blockPosX)
+                        VertexBuffer[vertexCount++].Data = (Face_Data[(k * 4) + j].X + blockPosX)
                                                            | ((Face_Data[(k * 4) + j].Y + blockPosY) << 6)
                                                            | ((Face_Data[(k * 4) + j].Z + blockPosZ) << 12)
                                                            | (k << 18)

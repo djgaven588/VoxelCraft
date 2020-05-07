@@ -10,11 +10,24 @@ namespace VoxelCraft
         public static ConcurrentDictionary<Coordinate, ChunkData> LoadedChunks = new ConcurrentDictionary<Coordinate, ChunkData>();
         public static Coordinate WorldCenter;
         public static Material ChunkMaterial;
-        public static int RenderDistance = 4;
+        public static int RenderDistance = 7;
+        public static Camera Camera;
 
-        public static void UpdateWorld()
+        public static void Initialize()
         {
-            WorldCenter = new Coordinate(0);
+            ChunkMaterial = new ChunkMaterial(
+                RenderDataHandler.GenerateProgram("chunkVertex.txt", "chunkFragment.txt", ChunkBlockVertexData.ShaderAttributes),
+                RenderDataHandler.LoadTextureArray(new string[] { "./Artwork/GrassTop.png", "./Artwork/GrassSide.png", "./Artwork/Dirt.png" }, 16, 16));
+
+            Camera = new Camera(0, 80, 0);
+
+            Graphics.UseCamera(Camera);
+        }
+
+        public static void UpdateWorld(double timeDelta)
+        {
+            Camera.Update(timeDelta);
+            WorldCenter = Coordinate.WorldToChunk(Camera.cameraPos);
 
             ChunkHandler.CheckToUnload(WorldCenter);
             ChunkHandler.CheckToLoadAndUpdate(WorldCenter);
@@ -27,9 +40,9 @@ namespace VoxelCraft
         {
             LoadedChunks.Remove(chunkLoc, out ChunkData chunk);
 
-            if(chunk != null)
+            if (chunk != null)
             {
-                if(chunk.GeneratedMesh != null)
+                if (chunk.GeneratedMesh != null)
                 {
                     Debug.Log("Deleting");
                     chunk.GeneratedMesh.RemoveMesh();
@@ -41,7 +54,7 @@ namespace VoxelCraft
 
         public static void CreateChunk(Coordinate coordinate)
         {
-            if(LoadedChunks.ContainsKey(coordinate) == false)
+            if (LoadedChunks.ContainsKey(coordinate) == false)
             {
                 LoadedChunks.TryAdd(coordinate, new ChunkData(coordinate) { CurrentChunkOperation = ChunkData.ChunkStage.New });
             }
@@ -63,7 +76,7 @@ namespace VoxelCraft
                     break;
                 case ChunkData.ChunkStage.Ready:
                 case ChunkData.ChunkStage.Generating_Mesh:
-                    
+
                     // This chunk is ready to process updates
 
                     break;
@@ -80,7 +93,7 @@ namespace VoxelCraft
             }
             else if (chunk.GeneratedMesh != null && chunk.GeneratedMesh.VertexCount > 0)
             {
-                Graphics.QueueDraw(ChunkMaterial, chunk.GeneratedMesh, Mathmatics.CreateTransformationMatrix(chunk.ChunkPosition.ChunkToWorld().ToVector(), Quaterniond.Identity, Vector3d.One));
+                Graphics.DrawNow(ChunkMaterial, chunk.GeneratedMesh, Mathmatics.CreateTransformationMatrix(chunk.ChunkPosition.ChunkToWorld().ToVector(), Quaterniond.Identity, Vector3d.One));
             }
 
             if (chunk.IsDirty && chunk.CurrentChunkOperation == ChunkData.ChunkStage.Ready)

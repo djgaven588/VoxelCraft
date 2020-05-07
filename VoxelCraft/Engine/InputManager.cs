@@ -15,9 +15,25 @@ namespace VoxelCraft
         {
             lastState = currentState;
             currentState = window.KeyboardState;
-            
+
             lastMouseState = currentMouseState;
             currentMouseState = window.MouseState;
+        }
+
+        public static int GetAxis(Key positive, Key negative)
+        {
+            int value = 0;
+            if (IsKeyDown(positive))
+            {
+                value += 1;
+            }
+
+            if (IsKeyDown(negative))
+            {
+                value -= 1;
+            }
+
+            return value;
         }
 
         public static bool IsKeyDown(Key key)

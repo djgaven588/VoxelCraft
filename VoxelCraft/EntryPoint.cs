@@ -1,21 +1,19 @@
-﻿using OpenToolkit.Graphics.OpenGL4;
-using OpenToolkit.Mathematics;
+﻿using OpenToolkit.Mathematics;
 using OpenToolkit.Windowing.Common;
-using OpenToolkit.Windowing.Common.Input;
 using OpenToolkit.Windowing.Desktop;
 using System;
 using System.ComponentModel;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
 using VoxelCraft.Rendering;
 
 namespace VoxelCraft
 {
     internal class EntryPoint
     {
+        public const bool DebugGraphics = false;
+
         static void Main(string[] args)
         {
-            Debug.Log("Hello World!");
+            Debug.Log("Starting...");
 
             windowWidth = 640;
             windowHeight = 480;
@@ -35,11 +33,8 @@ namespace VoxelCraft
                 APIVersion = new Version(4, 0),
                 Title = "Voxel Craft",
                 Size = new Vector2i(windowWidth, windowHeight)
-            }, OnLoad, OnClosed, OnClosing, OnResize, null, OnRender).Run();
+            }, OnLoad, null, OnClosing, OnResize, null, OnRender).Run();
         }
-
-        private static Material material;
-        private static Material skyboxMat;
 
         private static int windowWidth;
         private static int windowHeight;
@@ -47,72 +42,28 @@ namespace VoxelCraft
 
         private static Matrix4 projectionMatrix;
 
-        private static Quaterniond cameraRot;
-        private static Vector3d cameraPos = new Vector3d(0, 0, 5);
-        private static Material chunkMat;
-
-        private static DebugProc debugCallback;
-        private static GCHandle debugCallbackHandle;
-        private static ChunkMeshGenerator generator;
-
-        //private static World world;
-
         private static void OnLoad()
         {
-            material = new Material(RenderDataHandler.GenerateProgram("./Engine/Rendering/Shaders/vertex.txt", "./Engine/Rendering/Shaders/fragment.txt", StandardMeshVertexData.ShaderAttributes), RenderDataHandler.LoadTexture("./Artwork/Tree.png"));
-            skyboxMat = new SkyboxMaterial(RenderDataHandler.GenerateProgram("./Engine/Rendering/Shaders/skyboxVert.txt", "./Engine/Rendering/Shaders/skyboxFrag.txt", PositionOnlyMeshVertexData.ShaderAttributes),
+
+            SkyboxMaterial skyboxMat = new SkyboxMaterial(
+                RenderDataHandler.GenerateProgram("./Engine/Rendering/Shaders/skyboxVert.txt", "./Engine/Rendering/Shaders/skyboxFrag.txt", PositionOnlyMeshVertexData.ShaderAttributes),
                 RenderDataHandler.LoadCubeMap(new string[] {
                     "./Artwork/Skybox/right.png", "./Artwork/Skybox/left.png",
                     "./Artwork/Skybox/top.png", "./Artwork/Skybox/bottom.png",
                     "./Artwork/Skybox/front.png", "./Artwork/Skybox/back.png"
                 }));
 
-            chunkMat = new ChunkMaterial(RenderDataHandler.GenerateProgram("chunkVertex.txt", "chunkFragment.txt", ChunkBlockVertexData.ShaderAttributes), RenderDataHandler.LoadTextureArray(new string[] { "./Artwork/GrassTop.png", "./Artwork/GrassSide.png", "./Artwork/Dirt.png" }, 16, 16));
+            Graphics.UseSkybox(skyboxMat);
 
-            World.ChunkMaterial = chunkMat;
+            World.Initialize();
 
-            GL.ClearColor(Color4.CornflowerBlue);
+            Graphics.Initialize(Color4.CornflowerBlue);
 
-            GL.Enable(EnableCap.DepthTest);
-
-            GL.Enable(EnableCap.CullFace);
-            GL.CullFace(CullFaceMode.Back);
-
-            GL.FrontFace(FrontFaceDirection.Cw);
-
-            debugCallback = DebugCallback;
-
-            debugCallbackHandle = GCHandle.Alloc(debugCallback);
-
-            GL.DebugMessageCallback(debugCallback, IntPtr.Zero);
-
-            GL.Enable(EnableCap.DebugOutput);
-            GL.Enable(EnableCap.DebugOutputSynchronous);
-        }
-
-        private static void OnClosed()
-        {
-
-        }
-
-        private static void DebugCallback(DebugSource source,
-                                  DebugType type,
-                                  int id,
-                                  DebugSeverity severity,
-                                  int length,
-                                  IntPtr message,
-                                  IntPtr userParam)
-        {
-            string messageString = Marshal.PtrToStringAnsi(message, length);
-
-            if (type == DebugType.DebugTypeOther)
-                return;
-
-            Console.WriteLine($"{severity} {type} | {messageString}");
-
-            if (type == DebugType.DebugTypeError)
+            if (DebugGraphics)
             {
-                throw new Exception(messageString);
+#pragma warning disable CS0162
+                Debug.EnableOpenGLDebug();
+#pragma warning restore CS0162
             }
         }
 
@@ -125,38 +76,15 @@ namespace VoxelCraft
             projectionMatrix = Matrix4.CreatePerspectiveFieldOfView((float)Mathmatics.ConvertToRadians(60), (float)aspectRatio, 0.01f, 1000);
         }
 
-        private static double XRot;
-        private static double YRot;
         private static void OnRender(FrameEventArgs args)
         {
-            double xAxis = InputManager.IsKeyDown(Key.D) && !InputManager.IsKeyDown(Key.A) ? 1 : !InputManager.IsKeyDown(Key.D) && InputManager.IsKeyDown(Key.A) ? -1 : 0;
-            double yAxis = InputManager.IsKeyDown(Key.Space) && !InputManager.IsKeyDown(Key.ShiftLeft) ? 1 : !InputManager.IsKeyDown(Key.Space) && InputManager.IsKeyDown(Key.ShiftLeft) ? -1 : 0;
-            double zAxis = -(InputManager.IsKeyDown(Key.W) && !InputManager.IsKeyDown(Key.S) ? 1 : !InputManager.IsKeyDown(Key.W) && InputManager.IsKeyDown(Key.S) ? -1 : 0);
+            Graphics.BeforeRender();
 
-            double yRotation = InputManager.IsKeyDown(Key.E) && !InputManager.IsKeyDown(Key.Q) ? 1 : !InputManager.IsKeyDown(Key.E) && InputManager.IsKeyDown(Key.Q) ? -1 : 0;
-            double xRotation = InputManager.IsKeyDown(Key.Z) && !InputManager.IsKeyDown(Key.X) ? 1 : !InputManager.IsKeyDown(Key.Z) && InputManager.IsKeyDown(Key.X) ? -1 : 0;
+            World.UpdateWorld(args.Time);
 
-            XRot += xRotation * args.Time * 2;
-            YRot += yRotation * args.Time * 2;
-
-            cameraRot = Quaterniond.FromEulerAngles(0, 0, XRot) * Quaterniond.FromEulerAngles(0, YRot, 0);
-            cameraPos += cameraRot.Inverted() * new Vector3d(xAxis, yAxis, zAxis) * args.Time * 8;
-
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
-            Matrix4 viewMatrix = Mathmatics.CreateViewMatrix(cameraPos, cameraRot);
-
-            Graphics.UpdateCameraMatrix(viewMatrix * projectionMatrix);
-
-            World.UpdateWorld();
-
-            // Quad
-            Graphics.QueueDraw(material, PrimitiveMeshes.Quad, Mathmatics.CreateTransformationMatrix(new Vector3d(0, 0, 1.5), Quaterniond.Identity, Vector3d.One));
+            Graphics.UpdateProjectionMatrix(projectionMatrix);
 
             Graphics.HandleQueue();
-
-            // Skybox
-            Graphics.DrawNow(skyboxMat, PrimitiveMeshes.Skybox, new Matrix4(new Matrix3(viewMatrix)) * projectionMatrix, Matrix4.Identity);
         }
 
         private static void OnClosing(CancelEventArgs e)

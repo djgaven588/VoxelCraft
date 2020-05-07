@@ -30,6 +30,12 @@ namespace VoxelCraft
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Coordinate WorldToChunk(Vector3d position)
+        {
+            return new Coordinate((int)position.X >> ChunkData.CHUNK_LOG_SIZE, (int)position.Y >> ChunkData.CHUNK_LOG_SIZE, (int)position.Z >> ChunkData.CHUNK_LOG_SIZE);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Coordinate WorldToChunk()
         {
             return new Coordinate(X >> ChunkData.CHUNK_LOG_SIZE, Y >> ChunkData.CHUNK_LOG_SIZE, Z >> ChunkData.CHUNK_LOG_SIZE);

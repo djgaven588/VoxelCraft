@@ -1,5 +1,7 @@
-﻿using System;
+﻿using OpenToolkit.Graphics.OpenGL4;
+using System;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace VoxelCraft
 {
@@ -23,6 +25,32 @@ namespace VoxelCraft
             string callInfo = fileName + " : " + frame.GetFileLineNumber();
 
             Console.WriteLine($"< {callInfo} - {toLog}");
+        }
+
+
+        private static DebugProc DebugCallbackProc;
+        public static void EnableOpenGLDebug()
+        {
+            DebugCallbackProc = DebugCallback;
+
+            GCHandle.Alloc(DebugCallbackProc);
+
+            GL.DebugMessageCallback(DebugCallbackProc, IntPtr.Zero);
+
+            GL.Enable(EnableCap.DebugOutput);
+            GL.Enable(EnableCap.DebugOutputSynchronous);
+        }
+
+        private static void DebugCallback(DebugSource source, DebugType type, int id, DebugSeverity severity, int length, IntPtr message, IntPtr userParam)
+        {
+            string messageString = Marshal.PtrToStringAnsi(message, length);
+
+            Console.WriteLine($"{severity} {type} | {messageString}");
+
+            if (type == DebugType.DebugTypeError)
+            {
+                throw new Exception(messageString);
+            }
         }
 
         private static void ChangeConsoleColor(ConsoleColor color)

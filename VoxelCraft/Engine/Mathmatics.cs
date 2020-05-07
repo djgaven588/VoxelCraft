@@ -22,6 +22,9 @@ namespace VoxelCraft
         public static Matrix4 CreateViewMatrix(Vector3d position, Quaterniond rotation)
         {
             Matrix4 matrix = Matrix4.Identity;
+
+            position.Z *= -1;
+
             Vector3 negativeCameraPos = (Vector3)(-position);
             matrix *= Matrix4.CreateTranslation(negativeCameraPos);
             matrix *= Matrix4.CreateFromQuaternion(new Quaternion((float)rotation.X, (float)rotation.Y, (float)rotation.Z, (float)rotation.W));

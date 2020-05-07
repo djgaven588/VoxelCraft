@@ -56,8 +56,11 @@ namespace VoxelCraft
 
         protected override void OnRenderFrame(FrameEventArgs args)
         {
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+
             Graphics.ClearQueue();
             InputManager.UpdateInput(this);
+
             _onRender?.Invoke(args);
 
             SwapBuffers();
