@@ -12,7 +12,7 @@ namespace VoxelCraft
 
         private static readonly ConcurrentQueue<(ChunkData chunk, ChunkData[] neighbors)> meshJobs = new ConcurrentQueue<(ChunkData, ChunkData[])>();
         private static readonly ConcurrentQueue<ChunkData> terrainJobs = new ConcurrentQueue<ChunkData>();
-        private static readonly ConcurrentQueue<ChunkData> structureJobs = new ConcurrentQueue<ChunkData>();
+        private static readonly ConcurrentQueue<(ChunkData chunk, ChunkData[] neighbors)> structureJobs = new ConcurrentQueue<(ChunkData, ChunkData[])>();
 
         private static readonly ConcurrentQueue<Action> actionsWaitingForMainThread = new ConcurrentQueue<Action>();
         private static readonly ConcurrentQueue<ChunkMeshGenerator> meshGeneratorPool = new ConcurrentQueue<ChunkMeshGenerator>();
@@ -21,7 +21,7 @@ namespace VoxelCraft
         private static readonly ConcurrentQueue<string> debugMessages = new ConcurrentQueue<string>();
         private static bool shutdownThreads = false;
 
-        public const int MAX_MESH_GENERATORS = 32;
+        public static readonly int MAX_MESH_GENERATORS = Math.Min(Math.Max(Environment.ProcessorCount, 4) * 4, 32);
 
         static ChunkOperationDispatcher()
         {
@@ -77,12 +77,12 @@ namespace VoxelCraft
                     chunkToGenerateTerrain.CurrentChunkOperation = ChunkData.ChunkStage.Terrain_Complete;
                     chunkToGenerateTerrain.IsDirty = true;
                 }
-                else if (structureJobs.TryDequeue(out ChunkData chunkToGenerateStructure))
+                else if (structureJobs.TryDequeue(out (ChunkData chunk, ChunkData[] neighbors) structureJob))
                 {
-                    ChunkStructureGenerator.GenerateStructures(ref chunkToGenerateStructure);
-                    chunkToGenerateStructure.IsDirty = true;
+                    ChunkStructureGenerator.GenerateStructures(ref structureJob.chunk, structureJob.neighbors);
+                    structureJob.chunk.IsDirty = true;
 
-                    chunkToGenerateStructure.CurrentChunkOperation = ChunkData.ChunkStage.Ready;
+                    structureJob.chunk.CurrentChunkOperation = ChunkData.ChunkStage.Ready;
                 }
             }
         }
@@ -102,14 +102,14 @@ namespace VoxelCraft
             jobSemaphore.Release(1);
         }
 
-        public static void DispatchStructureGeneration(ref ChunkData chunkData)
+        public static void DispatchStructureGeneration(ref ChunkData chunkData, in ChunkData[] neighbors)
         {
             chunkData.CurrentChunkOperation = ChunkData.ChunkStage.Generating_Structures;
-            structureJobs.Enqueue(chunkData);
+            structureJobs.Enqueue((chunkData, neighbors));
             jobSemaphore.Release(1);
         }
 
-        public static void RunActionsWaitingForMainThread(long maxTimeInMS = 10)
+        public static void RunActionsWaitingForMainThread(long maxTimeInMS = 8)
         {
             while (debugMessages.TryDequeue(out string msg))
             {

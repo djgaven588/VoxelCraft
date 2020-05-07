@@ -26,6 +26,10 @@ namespace VoxelCraft.Rendering
             GL.CullFace(CullFaceMode.Back);
 
             GL.FrontFace(FrontFaceDirection.Cw);
+
+            //GL.Enable(EnableCap.Blend);
+            //GL.BlendEquation(BlendEquationMode.FuncAdd);
+            //GL.BlendFunc(BlendingFactor.One, BlendingFactor.One);
         }
 
         public static void BeforeRender()

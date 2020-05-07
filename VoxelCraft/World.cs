@@ -10,14 +10,17 @@ namespace VoxelCraft
         public static ConcurrentDictionary<Coordinate, ChunkData> LoadedChunks = new ConcurrentDictionary<Coordinate, ChunkData>();
         public static Coordinate WorldCenter;
         public static Material ChunkMaterial;
-        public static int RenderDistance = 7;
+        public static int RenderDistance = 5;
         public static Camera Camera;
 
         public static void Initialize()
         {
             ChunkMaterial = new ChunkMaterial(
                 RenderDataHandler.GenerateProgram("chunkVertex.txt", "chunkFragment.txt", ChunkBlockVertexData.ShaderAttributes),
-                RenderDataHandler.LoadTextureArray(new string[] { "./Artwork/GrassTop.png", "./Artwork/GrassSide.png", "./Artwork/Dirt.png" }, 16, 16));
+                RenderDataHandler.LoadTextureArray(new string[] { 
+                    "./Artwork/GrassTop.png", "./Artwork/GrassSide.png", 
+                    "./Artwork/Dirt.png", "./Artwork/Wood.png", 
+                    "./Artwork/WoodTop.png", "./Artwork/Leaf.png" }, 16, 16));
 
             Camera = new Camera(0, 80, 0);
 
@@ -44,7 +47,6 @@ namespace VoxelCraft
             {
                 if (chunk.GeneratedMesh != null)
                 {
-                    Debug.Log("Deleting");
                     chunk.GeneratedMesh.RemoveMesh();
                 }
 
@@ -64,7 +66,7 @@ namespace VoxelCraft
             }
         }
 
-        public static void UpdateChunk(ChunkData chunk)
+        public static void UpdateChunk(ChunkData chunk, int ring)
         {
             switch (chunk.CurrentChunkOperation)
             {
@@ -72,7 +74,10 @@ namespace VoxelCraft
                     ChunkOperationDispatcher.DispatchTerrainGeneration(ref chunk);
                     break;
                 case ChunkData.ChunkStage.Terrain_Complete:
-                    ChunkOperationDispatcher.DispatchStructureGeneration(ref chunk);
+                    if (ring - 1 < ChunkHandler.DISTANCE_FOR_UPDATE && GetSurroundingNeighbors(chunk.ChunkPosition, out ChunkData[] neighbors))
+                    {
+                        ChunkOperationDispatcher.DispatchStructureGeneration(ref chunk, neighbors);
+                    }
                     break;
                 case ChunkData.ChunkStage.Ready:
                 case ChunkData.ChunkStage.Generating_Mesh:
@@ -98,8 +103,73 @@ namespace VoxelCraft
 
             if (chunk.IsDirty && chunk.CurrentChunkOperation == ChunkData.ChunkStage.Ready)
             {
-                ChunkOperationDispatcher.DispatchMeshGeneration(ref chunk, null);
+                if (GetAdjacentNeighbors(chunk.ChunkPosition, out ChunkData[] neighbors))
+                {
+                    ChunkOperationDispatcher.DispatchMeshGeneration(ref chunk, neighbors);
+                }
             }
+        }
+
+        private static bool GetAdjacentNeighbors(Coordinate location, out ChunkData[] neighbors)
+        {
+            neighbors = new ChunkData[6];
+
+            if (LoadedChunks.TryGetValue(location + new Coordinate(0, 0, 1), out neighbors[0]) == false || !IsNeighborRenderReady(neighbors[0]))
+                return false;
+
+            if (LoadedChunks.TryGetValue(location - new Coordinate(0, 0, 1), out neighbors[1]) == false || !IsNeighborRenderReady(neighbors[1]))
+                return false;
+
+            if (LoadedChunks.TryGetValue(location + new Coordinate(1, 0, 0), out neighbors[2]) == false || !IsNeighborRenderReady(neighbors[2]))
+                return false;
+
+            if (LoadedChunks.TryGetValue(location - new Coordinate(1, 0, 0), out neighbors[3]) == false || !IsNeighborRenderReady(neighbors[3]))
+                return false;
+
+            if (location.Y != Region.REGION_SIZE && (LoadedChunks.TryGetValue(location + new Coordinate(0, 1, 0), out neighbors[4]) == false || !IsNeighborRenderReady(neighbors[4])))
+                return false;
+
+            if (location.Y != 0 && (LoadedChunks.TryGetValue(location - new Coordinate(0, 1, 0), out neighbors[5]) == false || !IsNeighborRenderReady(neighbors[5])))
+                return false;
+
+            return true;
+        }
+
+        private static bool IsNeighborRenderReady(ChunkData chunk)
+        {
+            return chunk.CurrentChunkOperation >= ChunkData.ChunkStage.Ready;
+        }
+
+        private static bool GetSurroundingNeighbors(Coordinate location, out ChunkData[] neighbors)
+        {
+            neighbors = new ChunkData[27];
+
+            int index = 0;
+            for (int z = -1; z <= 1; z++)
+            {
+                for (int y = -1; y <= 1; y++)
+                {
+                    for (int x = -1; x <= 1; x++)
+                    {
+                        if((location.Y + y >= 0 && location.Y + y < Region.REGION_SIZE) && !(x == 0 && y == 0 && z == 0))
+                        {
+                            if(LoadedChunks.TryGetValue(location + new Coordinate(x, y, z), out neighbors[index]) == false || !IsNeighborStructureReady(neighbors[index]))
+                            {
+                                return false;
+                            }
+                        }
+
+                        index++;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        private static bool IsNeighborStructureReady(ChunkData chunk)
+        {
+            return chunk.CurrentChunkOperation >= ChunkData.ChunkStage.Terrain_Complete;
         }
     }
 }

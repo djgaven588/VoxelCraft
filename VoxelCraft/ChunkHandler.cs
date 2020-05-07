@@ -4,9 +4,9 @@ namespace VoxelCraft
 {
     public static class ChunkHandler
     {
-        public const byte DISTANCE_KEPT_LOADED = 9;
-        public const byte DISTANCE_TO_LOADED = 7;
-        public const byte DISTANCE_FOR_UPDATE = 7;
+        public const byte DISTANCE_KEPT_LOADED = 7;
+        public const byte DISTANCE_TO_LOADED = 6;
+        public const byte DISTANCE_FOR_UPDATE = 6;
 
         public static void CheckToUnload(Coordinate chunkPosition)
         {
@@ -17,6 +17,11 @@ namespace VoxelCraft
                 if (coord.X > DISTANCE_KEPT_LOADED || coord.X < -DISTANCE_KEPT_LOADED || coord.Z > DISTANCE_KEPT_LOADED || coord.Z < -DISTANCE_KEPT_LOADED)
                 {
                     chunksToRemove.Enqueue(chunk.ChunkPosition);
+                }
+                else if(chunk.GeneratedMesh != null && (coord.X > World.RenderDistance || coord.X < -World.RenderDistance || coord.Z > World.RenderDistance || coord.Z < -World.RenderDistance))
+                {
+                    chunk.GeneratedMesh.RemoveMesh();
+                    chunk.GeneratedMesh = null;
                 }
             }
 
@@ -137,7 +142,7 @@ namespace VoxelCraft
                 for (int i = 0; i < Region.REGION_SIZE; i++)
                 {
                     centerChunk.Y = i;
-                    HandleAttemptUpdate(centerChunk);
+                    HandleAttemptUpdate(centerChunk, ring);
                 }
                 return;
             }
@@ -150,7 +155,7 @@ namespace VoxelCraft
                 for (int i = 0; i < Region.REGION_SIZE; i++)
                 {
                     currentOffset.Y = i;
-                    HandleAttemptUpdate(currentOffset);
+                    HandleAttemptUpdate(currentOffset, ring);
                 }
 
                 currentOffset.X += XZChangeSets[currentSet].Item1;
@@ -174,15 +179,15 @@ namespace VoxelCraft
             }
             else if (ring <= DISTANCE_FOR_UPDATE)
             {
-                World.UpdateChunk(chunk);
+                World.UpdateChunk(chunk, ring);
             }
         }
 
-        private static void HandleAttemptUpdate(Coordinate position)
+        private static void HandleAttemptUpdate(Coordinate position, int ring)
         {
             if (World.LoadedChunks.TryGetValue(position, out ChunkData chunk))
             {
-                World.UpdateChunk(chunk);
+                World.UpdateChunk(chunk, ring);
             }
         }
 
