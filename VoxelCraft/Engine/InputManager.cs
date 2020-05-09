@@ -1,4 +1,5 @@
 ﻿using OpenToolkit.Mathematics;
+using OpenToolkit.Windowing.Common;
 using OpenToolkit.Windowing.Common.Input;
 using OpenToolkit.Windowing.Desktop;
 
@@ -11,6 +12,49 @@ namespace VoxelCraft
         private static MouseState lastMouseState;
         private static MouseState currentMouseState;
 
+        private static bool mouseLockedAndHidden = false;
+        private static Vector2 mouseDeltaSinceLastFrame;
+        private static Vector2 mouseDelta;
+
+        private static GameWindow gameWindow;
+        private static bool mouseMovementAccepted = true;
+
+        public static void Initialize(GameWindow window)
+        {
+            gameWindow = window;
+            window.MouseMove += OnMouseMove;
+        }
+
+        public static void ChangeMouseState(bool lockedAndHidden)
+        {
+            mouseLockedAndHidden = lockedAndHidden;
+
+            UpdateMouse();
+        }
+
+        public static void ToggleMouseState()
+        {
+            mouseLockedAndHidden = !mouseLockedAndHidden;
+
+            UpdateMouse();
+        }
+
+        private static void UpdateMouse()
+        {
+            if (mouseLockedAndHidden)
+            {
+                gameWindow.CursorGrabbed = true;
+            }
+            else
+            {
+                gameWindow.CursorVisible = true;
+
+                gameWindow.MousePosition = new Vector2(gameWindow.ClientSize.X, gameWindow.ClientSize.Y) / 2;
+            }
+
+            mouseMovementAccepted = false;
+        }
+
         public static void UpdateInput(GameWindow window)
         {
             lastState = currentState;
@@ -18,6 +62,19 @@ namespace VoxelCraft
 
             lastMouseState = currentMouseState;
             currentMouseState = window.MouseState;
+
+            mouseDelta = mouseDeltaSinceLastFrame;
+            mouseDeltaSinceLastFrame = Vector2.Zero;
+        }
+
+        private static void OnMouseMove(MouseMoveEventArgs e)
+        {
+            if (mouseMovementAccepted)
+            {
+                mouseDeltaSinceLastFrame -= e.Delta;
+            }
+
+            mouseMovementAccepted = true;
         }
 
         public static int GetAxis(Key positive, Key negative)
@@ -68,7 +125,7 @@ namespace VoxelCraft
 
         public static Vector2 MouseDelta()
         {
-            return new Vector2(currentMouseState.X - lastMouseState.X, currentMouseState.Y - lastMouseState.Y);
+            return mouseDelta;
         }
 
         public static Vector2 MousePosition()

@@ -31,6 +31,8 @@ namespace VoxelCraft
         protected override void OnLoad()
         {
             IsFocused = true;
+            InputManager.Initialize(this);
+            InputManager.ChangeMouseState(true);
             PrimitiveMeshes.Init();
             _onLoad?.Invoke();
         }

@@ -10,6 +10,7 @@ namespace VoxelCraft
         public static ConcurrentDictionary<Coordinate, ChunkData> LoadedChunks = new ConcurrentDictionary<Coordinate, ChunkData>();
         public static Coordinate WorldCenter;
         public static Material ChunkMaterial;
+        public static Material TestMaterial;
         public static int RenderDistance = 5;
         public static Camera Camera;
 
@@ -22,6 +23,10 @@ namespace VoxelCraft
                     "./Artwork/Dirt.png", "./Artwork/Wood.png", 
                     "./Artwork/WoodTop.png", "./Artwork/Leaf.png" }, 16, 16));
 
+            TestMaterial = new Material(
+                RenderDataHandler.GenerateProgram("./Engine/Rendering/Shaders/vertex.txt", "./Engine/Rendering/Shaders/fragment.txt", StandardMeshVertexData.ShaderAttributes),
+                RenderDataHandler.LoadTexture("./Artwork/Dirt.png"));
+
             Camera = new Camera(0, 80, 0);
 
             Graphics.UseCamera(Camera);
@@ -29,6 +34,19 @@ namespace VoxelCraft
 
         public static void UpdateWorld(double timeDelta)
         {
+            BlockRaycast.RaycastData data = BlockRaycast.FindBlock(Camera.cameraPos, (Camera.cameraRot * new Vector3d(0, 0, 1)).Normalized(), 10);
+            if (data.HitBlock && data.RayTrapped == false)
+            {
+                Debug.Log($"Hit! {data.Chunk} {data.Block} {data.DistanceRemaining} - {(Camera.cameraRot * new Vector3d(0, 0, 1)).Normalized()}");
+                Graphics.QueueDraw(TestMaterial, PrimitiveMeshes.Cube, Mathmatics.CreateTransformationMatrix((data.Chunk.ChunkToWorld() + data.Block).ToVector(), Quaterniond.Identity, Vector3d.One * 3));
+            }
+            else
+            {
+                Debug.Log($"Nope! {data.HitBlock} {data.RayTrapped} {data.Chunk} {data.Block} {data.DistanceRemaining} - {(Camera.cameraRot * new Vector3d(0, 0, 1)).Normalized()}");
+            }
+
+            //Graphics.QueueDraw(TestMaterial, PrimitiveMeshes.Cube, Mathmatics.CreateTransformationMatrix(Camera.cameraPos + Camera.cameraRot * new Vector3d(0, 0, 5), Quaterniond.Identity, Vector3d.One));
+
             Camera.Update(timeDelta);
             WorldCenter = Coordinate.WorldToChunk(Camera.cameraPos);
 
@@ -110,6 +128,12 @@ namespace VoxelCraft
             }
         }
 
+        /// <summary>
+        /// Gets all adjacent neighbors (1 distance away).
+        /// </summary>
+        /// <param name="location">The location to start at</param>
+        /// <param name="neighbors">The neighboring chunks returned</param>
+        /// <returns>True or false, all neighbors were correctly found.</returns>
         private static bool GetAdjacentNeighbors(Coordinate location, out ChunkData[] neighbors)
         {
             neighbors = new ChunkData[6];

@@ -13,9 +13,9 @@ namespace VoxelCraft
 
             translation.Z *= -1;
 
+            matrix *= Matrix4.CreateTranslation((Vector3)translation);
             matrix *= Matrix4.CreateFromQuaternion(new Quaternion((float)rotation.X, (float)rotation.Y, (float)rotation.Z, (float)rotation.W));
             matrix *= Matrix4.CreateScale((Vector3)scale);
-            matrix *= Matrix4.CreateTranslation((Vector3)translation);
             return matrix;
         }
 
@@ -27,7 +27,11 @@ namespace VoxelCraft
 
             Vector3 negativeCameraPos = (Vector3)(-position);
             matrix *= Matrix4.CreateTranslation(negativeCameraPos);
-            matrix *= Matrix4.CreateFromQuaternion(new Quaternion((float)rotation.X, (float)rotation.Y, (float)rotation.Z, (float)rotation.W));
+            //Vector3d rot = rotation.ToEulerAngles();
+            //matrix *= Matrix4.CreateRotationY(-(float)rot.Y);
+            //matrix *= Matrix4.CreateRotationX(-(float)rot.Z);
+            //matrix *= Matrix4.CreateRotationZ((float)rot.X);
+            matrix *= Matrix4.CreateFromQuaternion(new Quaternion((float)rotation.Z, (float)rotation.Y, (float)rotation.X, (float)rotation.W));
             return matrix;
         }
 
