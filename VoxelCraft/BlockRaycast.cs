@@ -61,26 +61,36 @@ namespace VoxelCraft
                 };
             }
 
-            Debug.Log(direction);
-
-            double distanceX = (direction.X < 0.001 && direction.X > -0.001) ? double.MaxValue : currentPosition.X >= 0 ? currentPosition.X % 1 * Math.Abs(direction.X) : (1 - currentPosition.X % 1) * Math.Abs(direction.X);
-            double distanceY = (direction.Y < 0.001 && direction.Y > -0.001) ? double.MaxValue : currentPosition.Y >= 0 ? currentPosition.Y % 1 * Math.Abs(direction.Y) : (1 - currentPosition.Y % 1) * Math.Abs(direction.Y);
-            double distanceZ = (direction.Z < 0.001 && direction.Z > -0.001) ? double.MaxValue : currentPosition.Z >= 0 ? currentPosition.Z % 1 * Math.Abs(direction.Z) : (1 - currentPosition.Z % 1) * Math.Abs(direction.Z);
-            while (distance > 0)
+            while(distance > 0)
             {
+                double distanceX = GetDistance(currentPosition.X, direction.X, startDistance);// ((direction.X > 0.01 && direction.X < -0.01) || direction.X > 20 || direction.X < -20) ? double.MaxValue : ;//(Math.Ceiling(currentPosition.X + 0.00000001) - currentPosition.X) / direction.X;
+                double distanceY = GetDistance(currentPosition.Y, direction.Y, startDistance);//((direction.Y > 0.01 && direction.Y < -0.01) || direction.Y > 20 || direction.Y < -20) ? double.MaxValue : (Math.Ceiling(currentPosition.Y + 0.00000001) - currentPosition.Y) / direction.Y;
+                double distanceZ = GetDistance(currentPosition.Z, direction.Z, startDistance);//((direction.Z > 0.01 && direction.Z < -0.01) || direction.Z > 20 || direction.Z < -20) ? double.MaxValue : (Math.Ceiling(currentPosition.Z + 0.00000001) - currentPosition.Z) / direction.Z;
+
+                /*
+                if (distanceX < -startDistance)
+                {
+                    distanceX = double.MaxValue;
+                }
+                else if(distanceY < -startDistance)
+                {
+                    distanceY = double.MaxValue;
+                }
+                else if(distanceZ < -startDistance)
+                {
+                    distanceZ = double.MaxValue;
+                }*/
+
+                Debug.Log($"Distance: {distanceX}, {distanceY}, {distanceZ}");
+                Debug.Log($"Current Position: {currentPosition}");
+
                 Coordinate lastChunk = currentChunk;
 
-                Graphics.QueueDraw(World.TestMaterial, PrimitiveMeshes.Cube, Mathmatics.CreateTransformationMatrix(currentPosition - new Vector3d(0, 1, 0), Quaterniond.Identity, Vector3d.One * 0.2));
-
-                Debug.Log(currentPosition + " " + direction);
-
-                //Debug.Log($"{distanceX}, {distanceY}, {distanceZ} {currentBlock} - {currentPosition}");
-
-                if(distanceX <= distanceY && distanceX <= distanceZ)
+                if (distanceX <= distanceY && distanceX <= distanceZ)
                 {
-                    if (direction.X >= 0)
+                    if(direction.X >= 0)
                     {
-                        if (currentBlock.X == ChunkData.CHUNK_SIZE_MINUS_ONE)
+                        if(currentBlock.X == ChunkData.CHUNK_SIZE_MINUS_ONE)
                         {
                             currentBlock.X = 0;
                             currentChunk.X++;
@@ -89,22 +99,26 @@ namespace VoxelCraft
                         {
                             currentBlock.X++;
                         }
+
+                        hitSide = 3; // Left side, west
                     }
                     else
                     {
-                        if(currentBlock.X == 0)
+                        if (currentBlock.X == 0)
                         {
                             currentBlock.X = ChunkData.CHUNK_SIZE_MINUS_ONE;
                             currentChunk.X--;
                         }
                         else
                         {
-                            currentBlock.X++;
+                            currentBlock.X--;
                         }
+
+                        hitSide = 2; // Right side, east
                     }
 
+                    currentPosition += direction * distanceX;
                     distance -= distanceX;
-                    distanceX += Math.Abs(direction.X);
                 }
                 else if (distanceY <= distanceX && distanceY <= distanceZ)
                 {
@@ -119,6 +133,8 @@ namespace VoxelCraft
                         {
                             currentBlock.Y++;
                         }
+
+                        hitSide = 5; // Bottom side
                     }
                     else
                     {
@@ -131,10 +147,12 @@ namespace VoxelCraft
                         {
                             currentBlock.Y--;
                         }
+
+                        hitSide = 4; // Top side
                     }
 
+                    currentPosition += direction * distanceY;
                     distance -= distanceY;
-                    distanceY += Math.Abs(direction.Y);
                 }
                 else if (distanceZ <= distanceX && distanceZ <= distanceY)
                 {
@@ -149,6 +167,8 @@ namespace VoxelCraft
                         {
                             currentBlock.Z++;
                         }
+
+                        hitSide = 1; // Back side, south
                     }
                     else
                     {
@@ -161,22 +181,25 @@ namespace VoxelCraft
                         {
                             currentBlock.Z--;
                         }
+
+                        hitSide = 0; // Front side, north
                     }
 
+                    currentPosition += direction * distanceZ;
                     distance -= distanceZ;
-                    distanceZ += Math.Abs(direction.Z);
                 }
 
-                currentPosition = startPosition + direction * (startDistance - distance);
+                Debug.Log($"After Position: {currentPosition}");
+                Graphics.QueueDraw(World.TestMaterial, PrimitiveMeshes.Cube, Mathmatics.CreateTransformationMatrix(currentPosition + new Vector3d(0, -1, 0), Quaterniond.Identity, Vector3d.One));
 
-                if (currentChunk != lastChunk)
+                if (lastChunk != currentChunk)
                 {
                     World.LoadedChunks.TryGetValue(currentChunk, out searchingChunk);
                 }
 
-                if (searchingChunk == null)
+                if(searchingChunk == null)
                 {
-                    return new RaycastData();
+                    return new RaycastData(failed: true);
                 }
 
                 BlockData dat = searchingChunk.BlockData[currentBlock.X + currentBlock.Y * ChunkData.CHUNK_SIZE + currentBlock.Z * ChunkData.CHUNK_SIZE_SQR];
@@ -185,17 +208,44 @@ namespace VoxelCraft
                     return new RaycastData()
                     {
                         Block = currentBlock,
-                        Chunk = currentChunk,
                         BlockData = dat,
+                        Chunk = currentChunk,
+                        DistanceRemaining = distance,
                         HitBlock = true,
-                        RayTrapped = false,
                         HitSide = hitSide,
-                        DistanceRemaining = distance
+                        RayTrapped = false
                     };
                 }
             }
 
             return new RaycastData();
+        }
+
+        private static double GetDistance(double location, double direction, double maxDistance)
+        {
+            if((direction > 0.001 && direction < -0.001) || direction > 20 || direction < -20)
+            {
+                return double.MaxValue;
+            }
+
+            double value;
+            if(direction >= 0)
+            {
+                value = Math.Ceiling(location + 0.00000001) - location;
+            }
+            else
+            {
+                value = location - Math.Floor(location - 0.00000001);
+            }
+
+            value = Math.Abs(value) / Math.Abs(direction);
+
+            if(value > maxDistance || value < -maxDistance)
+            {
+                return double.MaxValue;
+            }
+
+            return value;
         }
     }
 }

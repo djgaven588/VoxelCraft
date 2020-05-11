@@ -38,7 +38,7 @@ namespace VoxelCraft
             if (data.HitBlock && data.RayTrapped == false)
             {
                 Debug.Log($"Hit! {data.Chunk} {data.Block} {data.DistanceRemaining} - {(Camera.cameraRot * new Vector3d(0, 0, 1)).Normalized()}");
-                Graphics.QueueDraw(TestMaterial, PrimitiveMeshes.Cube, Mathmatics.CreateTransformationMatrix((data.Chunk.ChunkToWorld() + data.Block).ToVector(), Quaterniond.Identity, Vector3d.One * 3));
+                Graphics.QueueDraw(TestMaterial, PrimitiveMeshes.Cube, Mathmatics.CreateTransformationMatrix((data.Chunk.ChunkToWorld() + data.Block).ToVector() + Vector3d.One * 0.5, Quaterniond.Identity, Vector3d.One));
             }
             else
             {
@@ -116,7 +116,7 @@ namespace VoxelCraft
             }
             else if (chunk.GeneratedMesh != null && chunk.GeneratedMesh.VertexCount > 0)
             {
-                Graphics.DrawNow(ChunkMaterial, chunk.GeneratedMesh, Mathmatics.CreateTransformationMatrix(chunk.ChunkPosition.ChunkToWorld().ToVector(), Quaterniond.Identity, Vector3d.One * 0.2));
+                Graphics.DrawNow(ChunkMaterial, chunk.GeneratedMesh, Mathmatics.CreateTransformationMatrix(chunk.ChunkPosition.ChunkToWorld().ToVector(), Quaterniond.Identity, Vector3d.One));
             }
 
             if (chunk.IsDirty && chunk.CurrentChunkOperation == ChunkData.ChunkStage.Ready)
