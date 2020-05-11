@@ -36,6 +36,7 @@ namespace VoxelCraft
         {
             Coordinate currentChunk = Coordinate.WorldToChunk(startPosition);
             Coordinate currentBlock = Coordinate.WorldToBlock(startPosition);
+            // CHECK THIS WORLD_TO_BLOCK METHOD
 
             World.LoadedChunks.TryGetValue(currentChunk, out ChunkData searchingChunk);
             byte hitSide = 0;
@@ -69,7 +70,7 @@ namespace VoxelCraft
             {
                 Coordinate lastChunk = currentChunk;
 
-                Graphics.QueueDraw(World.TestMaterial, PrimitiveMeshes.Cube, Mathmatics.CreateTransformationMatrix(currentPosition - new Vector3d(0, 1, 0), Quaterniond.Identity, Vector3d.One));
+                Graphics.QueueDraw(World.TestMaterial, PrimitiveMeshes.Cube, Mathmatics.CreateTransformationMatrix(currentPosition - new Vector3d(0, 1, 0), Quaterniond.Identity, Vector3d.One * 0.2));
 
                 Debug.Log(currentPosition + " " + direction);
 

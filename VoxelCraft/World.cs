@@ -116,7 +116,7 @@ namespace VoxelCraft
             }
             else if (chunk.GeneratedMesh != null && chunk.GeneratedMesh.VertexCount > 0)
             {
-                Graphics.DrawNow(ChunkMaterial, chunk.GeneratedMesh, Mathmatics.CreateTransformationMatrix(chunk.ChunkPosition.ChunkToWorld().ToVector(), Quaterniond.Identity, Vector3d.One));
+                Graphics.DrawNow(ChunkMaterial, chunk.GeneratedMesh, Mathmatics.CreateTransformationMatrix(chunk.ChunkPosition.ChunkToWorld().ToVector(), Quaterniond.Identity, Vector3d.One * 0.2));
             }
 
             if (chunk.IsDirty && chunk.CurrentChunkOperation == ChunkData.ChunkStage.Ready)

@@ -13,9 +13,10 @@ namespace VoxelCraft
 
             translation.Z *= -1;
 
+            //matrix *= Matrix4.CreateScale((Vector3)scale);
+            matrix *= Matrix4.CreateScale((float)scale.X, (float)scale.Y, (float)scale.Z);
             matrix *= Matrix4.CreateTranslation((Vector3)translation);
             matrix *= Matrix4.CreateFromQuaternion(new Quaternion((float)rotation.X, (float)rotation.Y, (float)rotation.Z, (float)rotation.W));
-            matrix *= Matrix4.CreateScale((Vector3)scale);
             return matrix;
         }
 
