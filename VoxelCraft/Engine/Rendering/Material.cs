@@ -1,6 +1,6 @@
 ﻿using OpenToolkit.Graphics.OpenGL4;
-using OpenToolkit.Mathematics;
 using System;
+using System.Numerics;
 
 namespace VoxelCraft.Rendering
 {
@@ -28,14 +28,31 @@ namespace VoxelCraft.Rendering
             return GL.GetUniformLocation(ProgramID, uniformName);
         }
 
-        public void LoadMatrix4(int location, Matrix4 matrix)
+        public void LoadMatrix4(int location, Matrix4x4 matrix)
         {
-            GL.ProgramUniformMatrix4(ProgramID, location, false, ref matrix);
+            float[] matrixTemp = new float[16];
+            matrixTemp[0] = matrix.M11;
+            matrixTemp[1] = matrix.M12;
+            matrixTemp[2] = matrix.M13;
+            matrixTemp[3] = matrix.M14;
+            matrixTemp[4] = matrix.M21;
+            matrixTemp[5] = matrix.M22;
+            matrixTemp[6] = matrix.M23;
+            matrixTemp[7] = matrix.M24;
+            matrixTemp[8] = matrix.M31;
+            matrixTemp[9] = matrix.M32;
+            matrixTemp[10] = matrix.M33;
+            matrixTemp[11] = matrix.M34;
+            matrixTemp[12] = matrix.M41;
+            matrixTemp[13] = matrix.M42;
+            matrixTemp[14] = matrix.M43;
+            matrixTemp[15] = matrix.M44;
+            GL.ProgramUniformMatrix4(ProgramID, location, 1, false, matrixTemp);
         }
 
         public void LoadVector3(int location, Vector3 vector)
         {
-            GL.ProgramUniform3(ProgramID, location, ref vector);
+            GL.ProgramUniform3(ProgramID, location, vector.X, vector.Y, vector.Z);
         }
 
         public virtual void BeforeRenderGroup()

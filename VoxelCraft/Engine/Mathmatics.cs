@@ -1,38 +1,33 @@
-﻿using OpenToolkit.Mathematics;
+﻿using System.Numerics;
 
 namespace VoxelCraft
 {
     public static class Mathmatics
     {
-        public const double PI = 3.1415926535897931;
-        public const double E = 2.7182818284590451;
+        public const float PI = 3.1415926535897931f;
+        public const float E = 2.7182818284590451f;
 
-        public static Matrix4 CreateTransformationMatrix(Vector3d translation, Quaterniond rotation, Vector3d scale)
+        public static Matrix4x4 CreateTransformationMatrix(Vector3 translation, Quaternion rotation, Vector3 scale)
         {
-            Matrix4 matrix = Matrix4.Identity;
+            Matrix4x4 matrix = Matrix4x4.Identity;
 
-            translation.Z *= -1;
+            translation.Z = -translation.Z;
 
-            //matrix *= Matrix4.CreateScale((Vector3)scale);
-            matrix *= Matrix4.CreateScale((float)scale.X, (float)scale.Y, (float)scale.Z);
-            matrix *= Matrix4.CreateTranslation((Vector3)translation);
-            matrix *= Matrix4.CreateFromQuaternion(new Quaternion((float)rotation.X, (float)rotation.Y, (float)rotation.Z, (float)rotation.W));
+            matrix *= Matrix4x4.CreateScale(scale);
+            matrix *= Matrix4x4.CreateFromQuaternion(rotation);
+            matrix *= Matrix4x4.CreateTranslation(translation);
             return matrix;
         }
 
-        public static Matrix4 CreateViewMatrix(Vector3d position, Quaterniond rotation)
+        public static Matrix4x4 CreateViewMatrix(Vector3 position, Quaternion rotation)
         {
-            Matrix4 matrix = Matrix4.Identity;
+            Matrix4x4 matrix = Matrix4x4.Identity;
 
-            position.Z *= -1;
+            position.Z = -position.Z;
 
-            Vector3 negativeCameraPos = (Vector3)(-position);
-            matrix *= Matrix4.CreateTranslation(negativeCameraPos);
-            //Vector3d rot = rotation.ToEulerAngles();
-            //matrix *= Matrix4.CreateRotationY(-(float)rot.Y);
-            //matrix *= Matrix4.CreateRotationX(-(float)rot.Z);
-            //matrix *= Matrix4.CreateRotationZ((float)rot.X);
-            matrix *= Matrix4.CreateFromQuaternion(new Quaternion((float)rotation.Z, (float)rotation.Y, (float)rotation.X, (float)rotation.W));
+            Vector3 negativeCameraPos = -position;
+            matrix *= Matrix4x4.CreateTranslation(negativeCameraPos);
+            matrix *= Matrix4x4.CreateFromQuaternion(new Quaternion(rotation.X, rotation.Y, rotation.Z, rotation.W));
             return matrix;
         }
 
@@ -41,7 +36,7 @@ namespace VoxelCraft
         /// </summary>
         /// <param name="degrees"></param>
         /// <returns></returns>
-        public static double ConvertToRadians(double degrees)
+        public static float ConvertToRadians(float degrees)
         {
             return (PI / 180) * degrees;
         }
@@ -51,9 +46,27 @@ namespace VoxelCraft
         /// </summary>
         /// <param name="degrees"></param>
         /// <returns></returns>
-        public static double ConvertToDegrees(double radians)
+        public static float ConvertToDegrees(float radians)
         {
             return radians * (180 / PI);
+        }
+
+        public static Vector3 TransformUnitZ(in Quaternion rotation)
+        {
+            //This operation is an optimized-down version of v' = q * v * q^-1.
+            //The expanded form would be to treat v as an 'axis only' quaternion
+            //and perform standard quaternion multiplication.  Assuming q is normalized,
+            //q^-1 can be replaced by a conjugation.
+            float x2 = rotation.X + rotation.X;
+            float y2 = rotation.Y + rotation.Y;
+            float z2 = rotation.Z + rotation.Z;
+            float xx2 = rotation.X * x2;
+            float xz2 = rotation.X * z2;
+            float yy2 = rotation.Y * y2;
+            float yz2 = rotation.Y * z2;
+            float wx2 = rotation.W * x2;
+            float wy2 = rotation.W * y2;
+            return new Vector3(xz2 + wy2, yz2 - wx2, xx2 - yy2);
         }
     }
 }

@@ -1,9 +1,11 @@
-﻿using OpenToolkit.Mathematics;
-using OpenToolkit.Windowing.Common;
+﻿using OpenToolkit.Windowing.Common;
 using OpenToolkit.Windowing.Desktop;
 using System;
 using System.ComponentModel;
+using System.Drawing;
+using System.Numerics;
 using VoxelCraft.Rendering;
+using Graphics = VoxelCraft.Rendering.Graphics;
 
 namespace VoxelCraft
 {
@@ -19,7 +21,7 @@ namespace VoxelCraft
             windowHeight = 480;
             aspectRatio = (double)windowWidth / windowHeight;
 
-            projectionMatrix = Matrix4.CreatePerspectiveFieldOfView((float)Mathmatics.ConvertToRadians(60), (float)aspectRatio, 0.01f, 1000);
+            projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView((float)Mathmatics.ConvertToRadians(60), (float)aspectRatio, 0.01f, 1000);
 
             new WindowHandler(new GameWindowSettings()
             {
@@ -32,7 +34,7 @@ namespace VoxelCraft
                 API = ContextAPI.OpenGL,
                 APIVersion = new Version(4, 0),
                 Title = "Voxel Craft",
-                Size = new Vector2i(windowWidth, windowHeight)
+                Size = new OpenToolkit.Mathematics.Vector2i(windowWidth, windowHeight)
             }, OnLoad, null, OnClosing, OnResize, null, OnRender).Run();
         }
 
@@ -40,7 +42,7 @@ namespace VoxelCraft
         private static int windowHeight;
         private static double aspectRatio;
 
-        private static Matrix4 projectionMatrix;
+        private static Matrix4x4 projectionMatrix;
 
         private static void OnLoad()
         {
@@ -57,7 +59,7 @@ namespace VoxelCraft
 
             World.Initialize();
 
-            Graphics.Initialize(Color4.CornflowerBlue);
+            Graphics.Initialize(Color.AliceBlue);
 
             if (DebugGraphics)
             {
@@ -73,7 +75,7 @@ namespace VoxelCraft
             windowHeight = e.Height;
             aspectRatio = (double)windowWidth / windowHeight;
 
-            projectionMatrix = Matrix4.CreatePerspectiveFieldOfView((float)Mathmatics.ConvertToRadians(60), (float)aspectRatio, 0.01f, 1000);
+            projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView((float)Mathmatics.ConvertToRadians(60), (float)aspectRatio, 0.01f, 1000);
         }
 
         private static void OnRender(FrameEventArgs args)
@@ -81,6 +83,8 @@ namespace VoxelCraft
             Graphics.BeforeRender();
 
             World.UpdateWorld(args.Time);
+
+            Graphics.BeforeRender();
 
             Graphics.UpdateProjectionMatrix(projectionMatrix);
 

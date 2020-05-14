@@ -6,7 +6,7 @@ namespace VoxelCraft
     {
         public static void GenerateStructures(ref ChunkData chunk, in ChunkData[] neighbors)
         {
-            Random random = new Random(chunk.ChunkPosition.GetHashCode());
+            Random random = new Random(chunk.ChunkPosition.GetDeterministicHashcode());
             for (int x = 0; x < ChunkData.CHUNK_SIZE; x++)
             {
                 for (int z = 0; z < ChunkData.CHUNK_SIZE; z++)
@@ -17,7 +17,7 @@ namespace VoxelCraft
                         for (int y = 0; y < ChunkData.CHUNK_SIZE; y++)
                         {
                             int location = x + y * ChunkData.CHUNK_SIZE + z * ChunkData.CHUNK_SIZE_SQR;
-                            if(groundBlockFound && chunk.BlockData[location].BlockID == 0)
+                            if(groundBlockFound && chunk.Data[location].BlockID == 0)
                             {
                                 int height = random.Next(4, 7);
                                 for (int i = 0; i < height + 1; i++)
@@ -41,7 +41,7 @@ namespace VoxelCraft
                                 break;
                             }
 
-                            groundBlockFound = chunk.BlockData[location].BlockID == 1;
+                            groundBlockFound = chunk.Data[location].BlockID == 1;
                         }
                     }
                 }
@@ -60,11 +60,11 @@ namespace VoxelCraft
             }
 
             int index = x + y * ChunkData.CHUNK_SIZE + z * ChunkData.CHUNK_SIZE_SQR;
-            if (destructive || (!destructive && chunkToModify.BlockData[index].BlockID == 0))
+            if (destructive || (!destructive && chunkToModify.Data[index].BlockID == 0))
             {
-                chunkToModify.BlockData[index].BlockID = id;
-                chunkToModify.BlockData[index].ExtraData = extra;
-                chunkToModify.IsDirty = true;
+                chunkToModify.Data[index].BlockID = id;
+                chunkToModify.Data[index].ExtraData = extra;
+                chunkToModify.RegenerateMesh = true;
             }
         }
 

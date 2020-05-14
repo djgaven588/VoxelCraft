@@ -56,13 +56,19 @@ namespace VoxelCraft
 
                     actionsWaitingForMainThread.Enqueue(() =>
                     {
-                        if (meshJob.chunk.GeneratedMesh != null)
+                        if (meshJob.chunk.Mesh != null)
                         {
-                            meshGenerator.FinishMeshGeneration(meshJob.chunk.GeneratedMesh);
+                            meshGenerator.FinishMeshGeneration(meshJob.chunk.Mesh);
+                            
                         }
-                        meshGeneratorPool.Enqueue(meshGenerator);
+                        else
+                        {
+                            Debug.Log("Failed to generate mesh");
+                        }
 
-                        meshJob.chunk.CurrentChunkOperation = ChunkData.ChunkStage.Ready;
+                        meshJob.chunk.CurrentOperation = ChunkData.ChunkOperation.Ready;
+
+                        meshGeneratorPool.Enqueue(meshGenerator);
                         activeMeshGenerators--;
                     });
                 }
@@ -74,37 +80,36 @@ namespace VoxelCraft
                 {
                     ChunkTerrainGenerator.GenerateTerrain(ref chunkToGenerateTerrain);
 
-                    chunkToGenerateTerrain.CurrentChunkOperation = ChunkData.ChunkStage.Terrain_Complete;
-                    chunkToGenerateTerrain.IsDirty = true;
+                    chunkToGenerateTerrain.CurrentOperation = ChunkData.ChunkOperation.Terrain_Complete;
+                    chunkToGenerateTerrain.RegenerateMesh = true;
                 }
                 else if (structureJobs.TryDequeue(out (ChunkData chunk, ChunkData[] neighbors) structureJob))
                 {
                     ChunkStructureGenerator.GenerateStructures(ref structureJob.chunk, structureJob.neighbors);
-                    structureJob.chunk.IsDirty = true;
 
-                    structureJob.chunk.CurrentChunkOperation = ChunkData.ChunkStage.Ready;
+                    structureJob.chunk.CurrentOperation = ChunkData.ChunkOperation.Ready;
                 }
             }
         }
 
         public static void DispatchMeshGeneration(ref ChunkData chunkData, in ChunkData[] neighbors)
         {
-            chunkData.CurrentChunkOperation = ChunkData.ChunkStage.Generating_Mesh;
-            chunkData.IsDirty = false;
+            chunkData.CurrentOperation = ChunkData.ChunkOperation.Generating_Mesh;
+            chunkData.RegenerateMesh = false;
             meshJobs.Enqueue((chunkData, neighbors));
             jobSemaphore.Release(1);
         }
 
         public static void DispatchTerrainGeneration(ref ChunkData chunkData)
         {
-            chunkData.CurrentChunkOperation = ChunkData.ChunkStage.Generating_Terrain;
+            chunkData.CurrentOperation = ChunkData.ChunkOperation.Generating_Terrain;
             terrainJobs.Enqueue(chunkData);
             jobSemaphore.Release(1);
         }
 
         public static void DispatchStructureGeneration(ref ChunkData chunkData, in ChunkData[] neighbors)
         {
-            chunkData.CurrentChunkOperation = ChunkData.ChunkStage.Generating_Structures;
+            chunkData.CurrentOperation = ChunkData.ChunkOperation.Generating_Structures;
             structureJobs.Enqueue((chunkData, neighbors));
             jobSemaphore.Release(1);
         }

@@ -1,22 +1,22 @@
 ﻿using OpenToolkit.Graphics.OpenGL4;
-using OpenToolkit.Mathematics;
 using System.Collections.Generic;
+using System.Numerics;
 
 namespace VoxelCraft.Rendering
 {
     public static class Graphics
     {
-        private static Matrix4 ViewProjectionMatrix;
+        private static Matrix4x4 ViewProjectionMatrix;
 
-        private static Matrix4 ViewMatrix;
-        private static Matrix4 ProjectionMatrix;
+        private static Matrix4x4 ViewMatrix;
+        private static Matrix4x4 ProjectionMatrix;
 
-        private static Dictionary<Mesh, Dictionary<Material, Queue<Matrix4>>> renderingQueue = new Dictionary<Mesh, Dictionary<Material, Queue<Matrix4>>>();
+        private static Dictionary<Mesh, Dictionary<Material, Queue<Matrix4x4>>> renderingQueue = new Dictionary<Mesh, Dictionary<Material, Queue<Matrix4x4>>>();
         private static SkyboxMaterial SkyboxMaterial;
 
         private static Camera Camera;
 
-        public static void Initialize(Color4 clearColor)
+        public static void Initialize(System.Drawing.Color clearColor)
         {
             GL.ClearColor(clearColor);
 
@@ -36,7 +36,7 @@ namespace VoxelCraft.Rendering
         {
             if (Camera != null)
             {
-                UpdateCameraMatrix(Mathmatics.CreateViewMatrix(Camera.cameraPos, Camera.cameraRot));
+                UpdateCameraMatrix(Mathmatics.CreateViewMatrix(Camera.Position, Camera.Rotation));
             }
             else
             {
@@ -56,16 +56,16 @@ namespace VoxelCraft.Rendering
 
         public static void HandleQueue()
         {
-            foreach (KeyValuePair<Mesh, Dictionary<Material, Queue<Matrix4>>> entry in renderingQueue)
+            foreach (KeyValuePair<Mesh, Dictionary<Material, Queue<Matrix4x4>>> entry in renderingQueue)
             {
                 Mesh meshToRender = entry.Key;
-                Dictionary<Material, Queue<Matrix4>> instances = entry.Value;
+                Dictionary<Material, Queue<Matrix4x4>> instances = entry.Value;
                 GL.BindVertexArray(meshToRender.VAOBuffer);
 
-                foreach (KeyValuePair<Material, Queue<Matrix4>> instanceEntry in instances)
+                foreach (KeyValuePair<Material, Queue<Matrix4x4>> instanceEntry in instances)
                 {
                     Material mat = instanceEntry.Key;
-                    Matrix4[] rendInstances = new Matrix4[instanceEntry.Value.Count];
+                    Matrix4x4[] rendInstances = new Matrix4x4[instanceEntry.Value.Count];
                     instanceEntry.Value.CopyTo(rendInstances, 0);
 
                     GL.UseProgram(mat.ProgramID);
@@ -94,7 +94,7 @@ namespace VoxelCraft.Rendering
 
             if (SkyboxMaterial != null)
             {
-                DrawNow(SkyboxMaterial, PrimitiveMeshes.Skybox, new Matrix4(new Matrix3(ViewMatrix)) * ProjectionMatrix, Matrix4.Identity);
+                DrawNow(SkyboxMaterial, PrimitiveMeshes.Skybox, Matrix4x4.CreateFromQuaternion(Camera.Rotation) * ProjectionMatrix/*Matrix4x4.Transform(ProjectionMatrix, Camera.Rotation)*/, Matrix4x4.Identity);
             }
         }
 
@@ -103,19 +103,19 @@ namespace VoxelCraft.Rendering
             renderingQueue.Clear();
         }
 
-        public static void UpdateCameraMatrix(Matrix4 newMatrix)
+        public static void UpdateCameraMatrix(Matrix4x4 newMatrix)
         {
             ViewMatrix = newMatrix;
             ViewProjectionMatrix = ViewMatrix * ProjectionMatrix;
         }
 
-        public static void UpdateProjectionMatrix(Matrix4 newMatrix)
+        public static void UpdateProjectionMatrix(Matrix4x4 newMatrix)
         {
             ProjectionMatrix = newMatrix;
             ViewProjectionMatrix = ViewMatrix * ProjectionMatrix;
         }
 
-        public static void DrawNow(Material material, Mesh mesh, Matrix4 viewProjectionMatrix, Matrix4 transformMatrix)
+        public static void DrawNow(Material material, Mesh mesh, Matrix4x4 viewProjectionMatrix, Matrix4x4 transformMatrix)
         {
             material.LoadMatrix4(material.ViewProjectionID, viewProjectionMatrix);
 
@@ -135,7 +135,7 @@ namespace VoxelCraft.Rendering
             GL.UseProgram(0);
         }
 
-        public static void DrawNow(Material material, Mesh mesh, Matrix4 transformMatrix)
+        public static void DrawNow(Material material, Mesh mesh, Matrix4x4 transformMatrix)
         {
             material.LoadMatrix4(material.ViewProjectionID, ViewProjectionMatrix);
 
@@ -155,7 +155,7 @@ namespace VoxelCraft.Rendering
             GL.UseProgram(0);
         }
 
-        public static void DrawNowInstanced(Material material, Mesh mesh, Matrix4[] transformMatrix)
+        public static void DrawNowInstanced(Material material, Mesh mesh, Matrix4x4[] transformMatrix)
         {
             material.LoadMatrix4(material.ViewProjectionID, ViewProjectionMatrix);
 
@@ -178,31 +178,31 @@ namespace VoxelCraft.Rendering
             GL.UseProgram(0);
         }
 
-        public static void QueueDraw(Material material, Mesh mesh, Matrix4 transformMatrix)
+        public static void QueueDraw(Material material, Mesh mesh, Matrix4x4 transformMatrix)
         {
             if (!renderingQueue.TryGetValue(mesh, out _))
             {
-                renderingQueue.Add(mesh, new Dictionary<Material, Queue<Matrix4>>());
+                renderingQueue.Add(mesh, new Dictionary<Material, Queue<Matrix4x4>>());
             }
 
             if (!renderingQueue[mesh].TryGetValue(material, out _))
             {
-                renderingQueue[mesh].Add(material, new Queue<Matrix4>());
+                renderingQueue[mesh].Add(material, new Queue<Matrix4x4>());
             }
 
             renderingQueue[mesh][material].Enqueue(transformMatrix);
         }
 
-        public static void QueueDrawInstanced(Material material, Mesh mesh, Matrix4[] transformMatrix)
+        public static void QueueDrawInstanced(Material material, Mesh mesh, Matrix4x4[] transformMatrix)
         {
             if (!renderingQueue.TryGetValue(mesh, out _))
             {
-                renderingQueue.Add(mesh, new Dictionary<Material, Queue<Matrix4>>());
+                renderingQueue.Add(mesh, new Dictionary<Material, Queue<Matrix4x4>>());
             }
 
             if (!renderingQueue[mesh].TryGetValue(material, out _))
             {
-                renderingQueue[mesh].Add(material, new Queue<Matrix4>());
+                renderingQueue[mesh].Add(material, new Queue<Matrix4x4>());
             }
 
             for (int i = 0; i < transformMatrix.Length; i++)

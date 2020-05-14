@@ -1,6 +1,6 @@
-﻿using OpenToolkit.Mathematics;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Numerics;
 using VoxelCraft.Rendering;
 
 namespace VoxelCraft
@@ -18,9 +18,9 @@ namespace VoxelCraft
         {
             ChunkMaterial = new ChunkMaterial(
                 RenderDataHandler.GenerateProgram("chunkVertex.txt", "chunkFragment.txt", ChunkBlockVertexData.ShaderAttributes),
-                RenderDataHandler.LoadTextureArray(new string[] { 
-                    "./Artwork/GrassTop.png", "./Artwork/GrassSide.png", 
-                    "./Artwork/Dirt.png", "./Artwork/Wood.png", 
+                RenderDataHandler.LoadTextureArray(new string[] {
+                    "./Artwork/GrassTop.png", "./Artwork/GrassSide.png",
+                    "./Artwork/Dirt.png", "./Artwork/Wood.png",
                     "./Artwork/WoodTop.png", "./Artwork/Leaf.png" }, 16, 16));
 
             TestMaterial = new Material(
@@ -34,41 +34,60 @@ namespace VoxelCraft
 
         public static void UpdateWorld(double timeDelta)
         {
-            BlockRaycast.RaycastData data = BlockRaycast.FindBlock(Camera.cameraPos, (Camera.cameraRot * new Vector3d(0, 0, 1)).Normalized(), 10);
+            Camera.Update((float)timeDelta);
+            Vector3 forward = TransformUnitZ(Camera.Rotation);
+            BlockRaycast.RaycastData data = BlockRaycast.FindBlock(Camera.Position, forward, 10);
             if (data.HitBlock && data.RayTrapped == false)
             {
-                Debug.Log($"Hit! {data.Chunk} {data.Block} {data.DistanceRemaining} - {(Camera.cameraRot * new Vector3d(0, 0, 1)).Normalized()}");
-                Graphics.QueueDraw(TestMaterial, PrimitiveMeshes.Cube, Mathmatics.CreateTransformationMatrix((data.Chunk.ChunkToWorld() + data.Block).ToVector() + Vector3d.One * 0.5, Quaterniond.Identity, Vector3d.One));
+                //Debug.Log($"Hit! {data.Chunk} {data.Block} {data.DistanceRemaining} - {(temp * new Vector3(0, 0, 1))}");
+                //Graphics.QueueDraw(TestMaterial, PrimitiveMeshes.Cube, Mathmatics.CreateTransformationMatrix((data.Chunk.ChunkToWorld() + data.Block).ToVector() + Vector3d.One * 0.5, Quaterniond.Identity, Vector3d.One));
             }
             else
             {
-                Debug.Log($"Nope! {data.HitBlock} {data.RayTrapped} {data.Chunk} {data.Block} {data.DistanceRemaining} - {(Camera.cameraRot * new Vector3d(0, 0, 1)).Normalized()}");
+                //Debug.Log($"Nope! {data.HitBlock} {data.RayTrapped} {data.Chunk} {data.Block} {data.DistanceRemaining} - {(Camera.cameraRot * new Vector3d(0, 0, 1)).Normalized()}");
             }
 
-            //Graphics.QueueDraw(TestMaterial, PrimitiveMeshes.Cube, Mathmatics.CreateTransformationMatrix(Camera.cameraPos + Camera.cameraRot * new Vector3d(0, 0, 5), Quaterniond.Identity, Vector3d.One));
+            Debug.Log(forward);
 
-            Camera.Update(timeDelta);
-            WorldCenter = Coordinate.WorldToChunk(Camera.cameraPos);
+            //Graphics.QueueDraw(TestMaterial, PrimitiveMeshes.Cube, Mathmatics.CreateTransformationMatrix(Camera.Position + Camera.Rotation * new Vector3(0, 0, 5), Quaternion.Identity, Vector3d.One));
+            WorldCenter = Coordinate.WorldToChunk(Camera.Position);
+
+            ChunkOperationDispatcher.RunActionsWaitingForMainThread();
 
             ChunkHandler.CheckToUnload(WorldCenter);
             ChunkHandler.CheckToLoadAndUpdate(WorldCenter);
             ChunkHandler.CheckToRender(WorldCenter);
+        }
 
-            ChunkOperationDispatcher.RunActionsWaitingForMainThread();
+        public static Vector3 TransformUnitZ(in Quaternion rotation)
+        {
+            //This operation is an optimized-down version of v' = q * v * q^-1.
+            //The expanded form would be to treat v as an 'axis only' quaternion
+            //and perform standard quaternion multiplication.  Assuming q is normalized,
+            //q^-1 can be replaced by a conjugation.
+            float x2 = rotation.X + rotation.X;
+            float y2 = rotation.Y + rotation.Y;
+            float z2 = rotation.Z + rotation.Z;
+            float xx2 = rotation.X * x2;
+            float xz2 = rotation.X * z2;
+            float yy2 = rotation.Y * y2;
+            float yz2 = rotation.Y * z2;
+            float wx2 = rotation.W * x2;
+            float wy2 = rotation.W * y2;
+            return new Vector3(xz2 + wy2, yz2 - wx2, xx2 - yy2);
         }
 
         public static void DeleteChunk(Coordinate chunkLoc)
         {
-            LoadedChunks.Remove(chunkLoc, out ChunkData chunk);
-
-            if (chunk != null)
+            if (LoadedChunks.Remove(chunkLoc, out ChunkData chunk))
             {
-                if (chunk.GeneratedMesh != null)
+                if (chunk.Mesh != null)
                 {
-                    chunk.GeneratedMesh.RemoveMesh();
+                    chunk.Mesh.RemoveMesh();
+                    Debug.Log("DELETE MESH CHUNK");
                 }
 
-                chunk.CurrentChunkOperation = ChunkData.ChunkStage.Unloading;
+                chunk.CurrentOperation = ChunkData.ChunkOperation.Unloading;
             }
         }
 
@@ -76,7 +95,10 @@ namespace VoxelCraft
         {
             if (LoadedChunks.ContainsKey(coordinate) == false)
             {
-                LoadedChunks.TryAdd(coordinate, new ChunkData(coordinate) { CurrentChunkOperation = ChunkData.ChunkStage.New });
+                if (!LoadedChunks.TryAdd(coordinate, new ChunkData(coordinate) { CurrentOperation = ChunkData.ChunkOperation.New }))
+                {
+                    Debug.Log("FAILED TO CREATE CHUNK!");
+                }
             }
             else
             {
@@ -86,19 +108,24 @@ namespace VoxelCraft
 
         public static void UpdateChunk(ChunkData chunk, int ring)
         {
-            switch (chunk.CurrentChunkOperation)
+            if (chunk.CurrentOperation == ChunkData.ChunkOperation.Unloading)
             {
-                case ChunkData.ChunkStage.New:
+                Debug.Log("BROKEN CHUNK!");
+            }
+
+            switch (chunk.CurrentOperation)
+            {
+                case ChunkData.ChunkOperation.New:
                     ChunkOperationDispatcher.DispatchTerrainGeneration(ref chunk);
                     break;
-                case ChunkData.ChunkStage.Terrain_Complete:
-                    if (ring - 1 < ChunkHandler.DISTANCE_FOR_UPDATE && GetSurroundingNeighbors(chunk.ChunkPosition, out ChunkData[] neighbors))
+                case ChunkData.ChunkOperation.Terrain_Complete:
+                    if (GetSurroundingNeighbors(chunk.ChunkPosition, out ChunkData[] neighbors))
                     {
                         ChunkOperationDispatcher.DispatchStructureGeneration(ref chunk, neighbors);
                     }
                     break;
-                case ChunkData.ChunkStage.Ready:
-                case ChunkData.ChunkStage.Generating_Mesh:
+                case ChunkData.ChunkOperation.Ready:
+                case ChunkData.ChunkOperation.Generating_Mesh:
 
                     // This chunk is ready to process updates
 
@@ -110,16 +137,16 @@ namespace VoxelCraft
 
         public static void RenderChunk(ChunkData chunk)
         {
-            if (chunk.GeneratedMesh == null)
+            if (chunk.Mesh == null && chunk.CurrentOperation == ChunkData.ChunkOperation.Ready)
             {
-                chunk.GeneratedMesh = Mesh.GenerateMesh(ChunkBlockVertexData.Attributes);
+                chunk.Mesh = Mesh.GenerateMesh(ChunkBlockVertexData.Attributes);
             }
-            else if (chunk.GeneratedMesh != null && chunk.GeneratedMesh.VertexCount > 0)
+            else if (chunk.Mesh != null && chunk.Mesh.VertexCount > 0)
             {
-                Graphics.DrawNow(ChunkMaterial, chunk.GeneratedMesh, Mathmatics.CreateTransformationMatrix(chunk.ChunkPosition.ChunkToWorld().ToVector(), Quaterniond.Identity, Vector3d.One));
+                Graphics.DrawNow(ChunkMaterial, chunk.Mesh, Mathmatics.CreateTransformationMatrix(chunk.ChunkPosition.ChunkToWorld().ToVector(), Quaternion.Identity, Vector3.One));
             }
 
-            if (chunk.IsDirty && chunk.CurrentChunkOperation == ChunkData.ChunkStage.Ready)
+            if (chunk.RegenerateMesh && chunk.CurrentOperation == ChunkData.ChunkOperation.Ready)
             {
                 if (GetAdjacentNeighbors(chunk.ChunkPosition, out ChunkData[] neighbors))
                 {
@@ -139,29 +166,41 @@ namespace VoxelCraft
             neighbors = new ChunkData[6];
 
             if (LoadedChunks.TryGetValue(location + new Coordinate(0, 0, 1), out neighbors[0]) == false || !IsNeighborRenderReady(neighbors[0]))
+            {
                 return false;
+            }
 
             if (LoadedChunks.TryGetValue(location - new Coordinate(0, 0, 1), out neighbors[1]) == false || !IsNeighborRenderReady(neighbors[1]))
+            {
                 return false;
+            }
 
             if (LoadedChunks.TryGetValue(location + new Coordinate(1, 0, 0), out neighbors[2]) == false || !IsNeighborRenderReady(neighbors[2]))
+            {
                 return false;
+            }
 
             if (LoadedChunks.TryGetValue(location - new Coordinate(1, 0, 0), out neighbors[3]) == false || !IsNeighborRenderReady(neighbors[3]))
+            {
                 return false;
+            }
 
             if (location.Y != Region.REGION_SIZE && (LoadedChunks.TryGetValue(location + new Coordinate(0, 1, 0), out neighbors[4]) == false || !IsNeighborRenderReady(neighbors[4])))
+            {
                 return false;
+            }
 
             if (location.Y != 0 && (LoadedChunks.TryGetValue(location - new Coordinate(0, 1, 0), out neighbors[5]) == false || !IsNeighborRenderReady(neighbors[5])))
+            {
                 return false;
+            }
 
             return true;
         }
 
         private static bool IsNeighborRenderReady(ChunkData chunk)
         {
-            return chunk.CurrentChunkOperation >= ChunkData.ChunkStage.Ready;
+            return chunk.CurrentOperation >= ChunkData.ChunkOperation.Ready;
         }
 
         private static bool GetSurroundingNeighbors(Coordinate location, out ChunkData[] neighbors)
@@ -175,9 +214,9 @@ namespace VoxelCraft
                 {
                     for (int x = -1; x <= 1; x++)
                     {
-                        if((location.Y + y >= 0 && location.Y + y < Region.REGION_SIZE) && !(x == 0 && y == 0 && z == 0))
+                        if ((location.Y + y >= 0 && location.Y + y < Region.REGION_SIZE) && !(x == 0 && y == 0 && z == 0))
                         {
-                            if(LoadedChunks.TryGetValue(location + new Coordinate(x, y, z), out neighbors[index]) == false || !IsNeighborStructureReady(neighbors[index]))
+                            if (LoadedChunks.TryGetValue(location + new Coordinate(x, y, z), out neighbors[index]) == false || !IsNeighborStructureReady(neighbors[index]))
                             {
                                 return false;
                             }
@@ -193,7 +232,7 @@ namespace VoxelCraft
 
         private static bool IsNeighborStructureReady(ChunkData chunk)
         {
-            return chunk.CurrentChunkOperation >= ChunkData.ChunkStage.Terrain_Complete;
+            return chunk.CurrentOperation >= ChunkData.ChunkOperation.Terrain_Complete;
         }
     }
 }

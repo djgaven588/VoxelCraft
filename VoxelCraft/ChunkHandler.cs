@@ -4,9 +4,8 @@ namespace VoxelCraft
 {
     public static class ChunkHandler
     {
-        public const byte DISTANCE_KEPT_LOADED = 7;
-        public const byte DISTANCE_TO_LOADED = 6;
-        public const byte DISTANCE_FOR_UPDATE = 6;
+        public const byte DISTANCE_KEPT_LOADED = 8;
+        public const byte DISTANCE_LOAD_UPDATE = 6;
 
         public static void CheckToUnload(Coordinate chunkPosition)
         {
@@ -18,10 +17,11 @@ namespace VoxelCraft
                 {
                     chunksToRemove.Enqueue(chunk.ChunkPosition);
                 }
-                else if(chunk.GeneratedMesh != null && (coord.X > World.RenderDistance || coord.X < -World.RenderDistance || coord.Z > World.RenderDistance || coord.Z < -World.RenderDistance))
+                else if(chunk.Mesh != null && (coord.X > World.RenderDistance || coord.X < -World.RenderDistance || coord.Z > World.RenderDistance || coord.Z < -World.RenderDistance))
                 {
-                    chunk.GeneratedMesh.RemoveMesh();
-                    chunk.GeneratedMesh = null;
+                    chunk.Mesh.RemoveMesh();
+                    chunk.Mesh = null;
+                    chunk.RegenerateMesh = true;
                 }
             }
 
@@ -34,7 +34,7 @@ namespace VoxelCraft
         public static void CheckToLoadAndUpdate(Coordinate chunkPosition)
         {
             chunkPosition.Y = 0;
-            for (int i = 0; i <= DISTANCE_TO_LOADED; i++)
+            for (int i = 0; i <= DISTANCE_LOAD_UPDATE; i++)
             {
                 HandleLoadAndUpdate(i, chunkPosition);
             }
@@ -43,7 +43,7 @@ namespace VoxelCraft
         public static void CheckToUpdate(Coordinate chunkPosition)
         {
             chunkPosition.Y = 0;
-            for (int i = 0; i <= DISTANCE_FOR_UPDATE; i++)
+            for (int i = 0; i <= DISTANCE_LOAD_UPDATE; i++)
             {
                 HandleUpdate(i, chunkPosition);
             }
@@ -177,7 +177,7 @@ namespace VoxelCraft
             {
                 World.CreateChunk(position);
             }
-            else if (ring <= DISTANCE_FOR_UPDATE)
+            else
             {
                 World.UpdateChunk(chunk, ring);
             }

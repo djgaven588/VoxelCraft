@@ -1,39 +1,40 @@
-﻿using OpenToolkit.Mathematics;
-using OpenToolkit.Windowing.Common.Input;
+﻿using OpenToolkit.Windowing.Common.Input;
 using System;
+using System.Numerics;
 
 namespace VoxelCraft.Rendering
 {
     public class Camera
     {
-        private Vector2d cameraAngle;
-        public Quaterniond cameraRot;
-        public Vector3d cameraPos = new Vector3d(0, 0, -5);
+        public Vector2 Angle;
+        public Quaternion Rotation;
+        public Vector3 Position = new Vector3(0, 0, -5);
 
-        public Camera(double x, double y, double z)
+        public Camera(float x, float y, float z)
         {
-            cameraPos = new Vector3d(x, y, z);
+            Position = new Vector3(x, y, z);
         }
 
-        public void Update(double timeDelta)
+        public void Update(float timeDelta)
         {
             if (InputManager.IsKeyNowDown(Key.Escape))
                 InputManager.ToggleMouseState();
 
-            Vector3d movement = new Vector3d(InputManager.GetAxis(Key.D, Key.A), InputManager.GetAxis(Key.Space, Key.ShiftLeft), InputManager.GetAxis(Key.W, Key.S));
+            Vector3 movement = new Vector3(InputManager.GetAxis(Key.D, Key.A), InputManager.GetAxis(Key.Space, Key.ShiftLeft), InputManager.GetAxis(Key.W, Key.S));
 
-            if (movement.LengthSquared > 0)
+            if (movement.Length() > 0)
             {
-                movement = movement.Normalized() * timeDelta * 16;
+                movement = (movement / movement.Length()) * timeDelta * 16;
             }
 
-            cameraAngle += (Vector2d)InputManager.MouseDelta().Yx * timeDelta * 5;//new Vector2d(InputManager.GetAxis(Key.Z, Key.X), InputManager.GetAxis(Key.E, Key.Q)) * timeDelta * 2;
+            var ang = InputManager.MouseDelta() * timeDelta * 5;
+            Angle += new Vector2(ang.X, ang.Y);
 
-            cameraAngle.X = Math.Clamp(cameraAngle.X, -90, 90);
+            Angle.Y = Math.Clamp(Angle.Y, -90, 90);
 
-            cameraPos += Quaterniond.FromEulerAngles(0, Mathmatics.ConvertToRadians(cameraAngle.Y), 0) * movement;
+            Position += Vector3.Transform(movement, Quaternion.CreateFromYawPitchRoll(0, Mathmatics.ConvertToRadians(Angle.Y), 0));//Mathmatics.TransformUnitZ(Quaternion.CreateFromYawPitchRoll(Mathmatics.ConvertToRadians(Angle.Y), 0, 0)) * movement;//new Quaterniond(temp.X, temp.Y, temp.Z, temp.W) * movement;
 
-            cameraRot = Quaterniond.FromEulerAngles(Mathmatics.ConvertToRadians(cameraAngle.X), Mathmatics.ConvertToRadians(cameraAngle.Y), 0);
+            Rotation = Quaternion.CreateFromYawPitchRoll(Mathmatics.ConvertToRadians(Angle.X), Mathmatics.ConvertToRadians(Angle.Y), 0);
         }
     }
 }

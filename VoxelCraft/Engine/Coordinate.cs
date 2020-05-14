@@ -1,4 +1,5 @@
-﻿using OpenToolkit.Mathematics;
+﻿using System;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace VoxelCraft
@@ -24,19 +25,19 @@ namespace VoxelCraft
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3d ToVector(Coordinate coord)
+        public static Vector3 ToVector(Coordinate coord)
         {
-            return new Vector3d(coord.X, coord.Y, coord.Z);
+            return new Vector3(coord.X, coord.Y, coord.Z);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Coordinate WorldToChunk(Vector3d position)
+        public static Coordinate WorldToChunk(Vector3 position)
         {
             return new Coordinate((int)position.X >> ChunkData.CHUNK_LOG_SIZE, (int)position.Y >> ChunkData.CHUNK_LOG_SIZE, (int)position.Z >> ChunkData.CHUNK_LOG_SIZE);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Coordinate WorldToBlock(Vector3d position)
+        public static Coordinate WorldToBlock(Vector3 position)
         {
             return new Coordinate((int)position.X & ChunkData.CHUNK_SIZE_MINUS_ONE, (int)position.Y & ChunkData.CHUNK_SIZE_MINUS_ONE, (int)position.Z & ChunkData.CHUNK_SIZE_MINUS_ONE);
         }
@@ -66,9 +67,9 @@ namespace VoxelCraft
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Vector3d ToVector()
+        public Vector3 ToVector()
         {
-            return new Vector3d(X, Y, Z);
+            return new Vector3(X, Y, Z);
         }
 
         public override bool Equals(object obj)
@@ -85,7 +86,24 @@ namespace VoxelCraft
 
         public override int GetHashCode()
         {
-            return (X, Y, Z).GetHashCode();
+            return HashCode.Combine(X, Y, Z);
+        }
+
+        /// <summary>
+        /// Returns a deterministic hashcode.
+        /// WARNING: GetHashCode should be used especially when interacting with networking, use with caution.
+        /// </summary>
+        /// <returns>A hashcode</returns>
+        public int GetDeterministicHashcode()
+        {
+            unchecked
+            {
+                int hashCode = 107;
+                hashCode = (hashCode * 397) ^ X;
+                hashCode = (hashCode * 359) ^ Y;
+                hashCode = (hashCode * 563) ^ Z;
+                return hashCode;
+            }
         }
 
         public static Coordinate operator *(Coordinate a, int b)

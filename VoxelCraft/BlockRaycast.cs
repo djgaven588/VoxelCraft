@@ -1,6 +1,5 @@
-﻿using OpenToolkit.Mathematics;
-using System;
-using VoxelCraft.Rendering;
+﻿using System;
+using System.Numerics;
 
 namespace VoxelCraft
 {
@@ -32,7 +31,7 @@ namespace VoxelCraft
             }
         }
 
-        public static RaycastData FindBlock(Vector3d startPosition, Vector3d direction, double distance)
+        public static RaycastData FindBlock(Vector3 startPosition, Vector3 direction, float distance)
         {
             Coordinate currentChunk = Coordinate.WorldToChunk(startPosition);
             Coordinate currentBlock = Coordinate.WorldToBlock(startPosition);
@@ -41,14 +40,14 @@ namespace VoxelCraft
             World.LoadedChunks.TryGetValue(currentChunk, out ChunkData searchingChunk);
             byte hitSide = 0;
 
-            Vector3d currentPosition = startPosition;
-            double startDistance = distance;
+            Vector3 currentPosition = startPosition;
+            float startDistance = distance;
 
             if(searchingChunk == null)
             {
                 return new RaycastData(failed: true);
             }
-            else if(searchingChunk.BlockData[currentBlock.X + currentBlock.Y * ChunkData.CHUNK_SIZE + currentBlock.Z * ChunkData.CHUNK_SIZE_SQR].BlockID != 0)
+            else if(searchingChunk.Data[currentBlock.X + currentBlock.Y * ChunkData.CHUNK_SIZE + currentBlock.Z * ChunkData.CHUNK_SIZE_SQR].BlockID != 0)
             {
                 return new RaycastData()
                 {
@@ -63,26 +62,9 @@ namespace VoxelCraft
 
             while(distance > 0)
             {
-                double distanceX = GetDistance(currentPosition.X, direction.X, startDistance);// ((direction.X > 0.01 && direction.X < -0.01) || direction.X > 20 || direction.X < -20) ? double.MaxValue : ;//(Math.Ceiling(currentPosition.X + 0.00000001) - currentPosition.X) / direction.X;
-                double distanceY = GetDistance(currentPosition.Y, direction.Y, startDistance);//((direction.Y > 0.01 && direction.Y < -0.01) || direction.Y > 20 || direction.Y < -20) ? double.MaxValue : (Math.Ceiling(currentPosition.Y + 0.00000001) - currentPosition.Y) / direction.Y;
-                double distanceZ = GetDistance(currentPosition.Z, direction.Z, startDistance);//((direction.Z > 0.01 && direction.Z < -0.01) || direction.Z > 20 || direction.Z < -20) ? double.MaxValue : (Math.Ceiling(currentPosition.Z + 0.00000001) - currentPosition.Z) / direction.Z;
-
-                /*
-                if (distanceX < -startDistance)
-                {
-                    distanceX = double.MaxValue;
-                }
-                else if(distanceY < -startDistance)
-                {
-                    distanceY = double.MaxValue;
-                }
-                else if(distanceZ < -startDistance)
-                {
-                    distanceZ = double.MaxValue;
-                }*/
-
-                Debug.Log($"Distance: {distanceX}, {distanceY}, {distanceZ}");
-                Debug.Log($"Current Position: {currentPosition}");
+                float distanceX = GetDistance(currentPosition.X, direction.X, startDistance);
+                float distanceY = GetDistance(currentPosition.Y, direction.Y, startDistance);
+                float distanceZ = GetDistance(currentPosition.Z, direction.Z, startDistance);
 
                 Coordinate lastChunk = currentChunk;
 
@@ -189,8 +171,7 @@ namespace VoxelCraft
                     distance -= distanceZ;
                 }
 
-                Debug.Log($"After Position: {currentPosition}");
-                Graphics.QueueDraw(World.TestMaterial, PrimitiveMeshes.Cube, Mathmatics.CreateTransformationMatrix(currentPosition + new Vector3d(0, -1, 0), Quaterniond.Identity, Vector3d.One));
+                //Graphics.QueueDraw(World.TestMaterial, PrimitiveMeshes.Cube, Mathmatics.CreateTransformationMatrix(currentPosition + new Vector3d(0, -0.2, 0), Quaterniond.Identity, Vector3d.One * 0.25));
 
                 if (lastChunk != currentChunk)
                 {
@@ -202,7 +183,7 @@ namespace VoxelCraft
                     return new RaycastData(failed: true);
                 }
 
-                BlockData dat = searchingChunk.BlockData[currentBlock.X + currentBlock.Y * ChunkData.CHUNK_SIZE + currentBlock.Z * ChunkData.CHUNK_SIZE_SQR];
+                BlockData dat = searchingChunk.Data[currentBlock.X + currentBlock.Y * ChunkData.CHUNK_SIZE + currentBlock.Z * ChunkData.CHUNK_SIZE_SQR];
                 if(dat.BlockID != 0)
                 {
                     return new RaycastData()
@@ -221,31 +202,31 @@ namespace VoxelCraft
             return new RaycastData();
         }
 
-        private static double GetDistance(double location, double direction, double maxDistance)
+        private static float GetDistance(float location, float direction, float maxDistance)
         {
             if((direction > 0.001 && direction < -0.001) || direction > 20 || direction < -20)
             {
-                return double.MaxValue;
+                return float.MaxValue;
             }
 
             double value;
-            if(direction >= 0)
+            if (direction >= 0)
             {
-                value = Math.Ceiling(location + 0.00000001) - location;
+                value = Math.Ceiling(Math.Abs(location) + 0.00000001) - Math.Abs(location);
             }
             else
             {
-                value = location - Math.Floor(location - 0.00000001);
+                value = Math.Abs(location) - Math.Floor(Math.Abs(location) - 0.00000001);
             }
 
-            value = Math.Abs(value) / Math.Abs(direction);
+            value /= Math.Abs(direction);
 
             if(value > maxDistance || value < -maxDistance)
             {
-                return double.MaxValue;
+                return float.MaxValue;
             }
 
-            return value;
+            return (float)value;
         }
     }
 }

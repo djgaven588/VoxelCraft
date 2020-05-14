@@ -21,9 +21,9 @@ namespace VoxelCraft
 
             bool useNeighbors = neighbors != null && neighbors.Length == 6;
 
-            for (uint i = 0; i < chunk.BlockData.Length; i++)
+            for (uint i = 0; i < chunk.Data.Length; i++)
             {
-                if ((chunk.BlockData[i].ExtraData >> 6 & 1) == 1 || chunk.BlockData[i].BlockID >= BlockDatabase.BlockTextures.Length)
+                if ((chunk.Data[i].ExtraData >> 6 & 1) == 1 || chunk.Data[i].BlockID >= BlockDatabase.BlockTextures.Length)
                 {
                     continue;
                 }
@@ -35,28 +35,28 @@ namespace VoxelCraft
                 for (uint k = 0; k < 6; k++)
                 {
                     if ((k == 0 && !(blockPosZ == ChunkData.CHUNK_SIZE - 1 ?
-                                (!useNeighbors || neighbors[0] == null || (useNeighbors && (neighbors[0].BlockData[i - ChunkData.CHUNK_SIZE_SQR * (ChunkData.CHUNK_SIZE - 1)].ExtraData >> 5 & 1) == 1)) :
-                                (chunk.BlockData[i + ChunkData.CHUNK_SIZE * ChunkData.CHUNK_SIZE].ExtraData >> 5 & 1) == 1)) ||
+                                (!useNeighbors || neighbors[0] == null || (useNeighbors && (neighbors[0].Data[i - ChunkData.CHUNK_SIZE_SQR * (ChunkData.CHUNK_SIZE - 1)].ExtraData >> 5 & 1) == 1)) :
+                                (chunk.Data[i + ChunkData.CHUNK_SIZE * ChunkData.CHUNK_SIZE].ExtraData >> 5 & 1) == 1)) ||
 
                        (k == 1 && !(blockPosZ == 0 ?
-                                (!useNeighbors || neighbors[1] == null || (useNeighbors && (neighbors[1].BlockData[i + ChunkData.CHUNK_SIZE_SQR * (ChunkData.CHUNK_SIZE - 1)].ExtraData >> 5 & 1) == 1)) :
-                                (chunk.BlockData[i - ChunkData.CHUNK_SIZE * ChunkData.CHUNK_SIZE].ExtraData >> 5 & 1) == 1)) ||
+                                (!useNeighbors || neighbors[1] == null || (useNeighbors && (neighbors[1].Data[i + ChunkData.CHUNK_SIZE_SQR * (ChunkData.CHUNK_SIZE - 1)].ExtraData >> 5 & 1) == 1)) :
+                                (chunk.Data[i - ChunkData.CHUNK_SIZE * ChunkData.CHUNK_SIZE].ExtraData >> 5 & 1) == 1)) ||
 
                         (k == 2 && !(blockPosX == ChunkData.CHUNK_SIZE - 1 ?
-                                (!useNeighbors || neighbors[2] == null || (useNeighbors && (neighbors[2].BlockData[i - (ChunkData.CHUNK_SIZE - 1)].ExtraData >> 5 & 1) == 1)) :
-                                (chunk.BlockData[i + 1].ExtraData >> 5 & 1) == 1)) ||
+                                (!useNeighbors || neighbors[2] == null || (useNeighbors && (neighbors[2].Data[i - (ChunkData.CHUNK_SIZE - 1)].ExtraData >> 5 & 1) == 1)) :
+                                (chunk.Data[i + 1].ExtraData >> 5 & 1) == 1)) ||
 
                         (k == 3 && !(blockPosX == 0 ?
-                                (!useNeighbors || neighbors[3] == null || (useNeighbors && (neighbors[3].BlockData[i + (ChunkData.CHUNK_SIZE - 1)].ExtraData >> 5 & 1) == 1)) :
-                                (chunk.BlockData[i - 1].ExtraData >> 5 & 1) == 1)) ||
+                                (!useNeighbors || neighbors[3] == null || (useNeighbors && (neighbors[3].Data[i + (ChunkData.CHUNK_SIZE - 1)].ExtraData >> 5 & 1) == 1)) :
+                                (chunk.Data[i - 1].ExtraData >> 5 & 1) == 1)) ||
 
                         (k == 4 && !(blockPosY == ChunkData.CHUNK_SIZE - 1 ?
-                                (!useNeighbors || neighbors[4] == null || (useNeighbors && (neighbors[4].BlockData[i - ChunkData.CHUNK_SIZE * (ChunkData.CHUNK_SIZE - 1)].ExtraData >> 5 & 1) == 1)) :
-                                (chunk.BlockData[i + ChunkData.CHUNK_SIZE].ExtraData >> 5 & 1) == 1)) ||
+                                (!useNeighbors || neighbors[4] == null || (useNeighbors && (neighbors[4].Data[i - ChunkData.CHUNK_SIZE * (ChunkData.CHUNK_SIZE - 1)].ExtraData >> 5 & 1) == 1)) :
+                                (chunk.Data[i + ChunkData.CHUNK_SIZE].ExtraData >> 5 & 1) == 1)) ||
 
                         (k == 5 && !(blockPosY == 0 ?
-                                (!useNeighbors || neighbors[5] == null || (useNeighbors && (neighbors[5].BlockData[i + ChunkData.CHUNK_SIZE * (ChunkData.CHUNK_SIZE - 1)].ExtraData >> 5 & 1) == 1)) :
-                                (chunk.BlockData[i - ChunkData.CHUNK_SIZE].ExtraData >> 5 & 1) == 1)))
+                                (!useNeighbors || neighbors[5] == null || (useNeighbors && (neighbors[5].Data[i + ChunkData.CHUNK_SIZE * (ChunkData.CHUNK_SIZE - 1)].ExtraData >> 5 & 1) == 1)) :
+                                (chunk.Data[i - ChunkData.CHUNK_SIZE].ExtraData >> 5 & 1) == 1)))
                     {
                         continue;
                     }
@@ -77,7 +77,7 @@ namespace VoxelCraft
                                                            | ((Face_Data[(k * 4) + j].Z + blockPosZ) << 12)
                                                            | (k << 18)
                                                            | (j << 21)
-                                                           | ((uint)BlockDatabase.BlockTextures[chunk.BlockData[i].BlockID].Textures[k] << 23);
+                                                           | ((uint)BlockDatabase.BlockTextures[chunk.Data[i].BlockID].Textures[k] << 23);
                     }
                 }
             }
