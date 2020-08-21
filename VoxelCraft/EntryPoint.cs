@@ -4,6 +4,7 @@ using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Numerics;
+using VoxelCraft.Engine.Rendering.Standard.Materials;
 using VoxelCraft.Rendering;
 using Graphics = VoxelCraft.Rendering.Graphics;
 
@@ -13,17 +14,19 @@ namespace VoxelCraft
     {
         public const bool DebugGraphics = false;
 
+        private static WindowHandler Window;
+
         static void Main(string[] args)
         {
             Debug.Log("Starting...");
 
-            windowWidth = 640;
-            windowHeight = 480;
-            aspectRatio = (double)windowWidth / windowHeight;
+            WindowWidth = 640;
+            WindowHeight = 480;
+            AspectRatio = (double)WindowWidth / WindowHeight;
 
-            projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView((float)Mathmatics.ConvertToRadians(60), (float)aspectRatio, 0.01f, 1000);
+            projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView((float)Mathmatics.ConvertToRadians(60), (float)AspectRatio, 0.01f, 1000);
 
-            new WindowHandler(new GameWindowSettings()
+            Window = new WindowHandler(new GameWindowSettings()
             {
                 IsMultiThreaded = false,
                 RenderFrequency = 60,
@@ -34,13 +37,15 @@ namespace VoxelCraft
                 API = ContextAPI.OpenGL,
                 APIVersion = new Version(4, 0),
                 Title = "Voxel Craft",
-                Size = new OpenToolkit.Mathematics.Vector2i(windowWidth, windowHeight)
-            }, OnLoad, null, OnClosing, OnResize, null, OnRender).Run();
+                Size = new OpenToolkit.Mathematics.Vector2i(WindowWidth, WindowHeight)
+            }, OnLoad, null, OnClosing, OnResize, null, OnRender);
+
+            Window.Run();
         }
 
-        private static int windowWidth;
-        private static int windowHeight;
-        private static double aspectRatio;
+        public static int WindowWidth { get; private set; }
+        public static int WindowHeight { get; private set; }
+        public static double AspectRatio { get; private set; }
 
         private static Matrix4x4 projectionMatrix;
 
@@ -48,7 +53,7 @@ namespace VoxelCraft
         {
 
             SkyboxMaterial skyboxMat = new SkyboxMaterial(
-                RenderDataHandler.GenerateProgram("./Engine/Rendering/Shaders/skyboxVert.txt", "./Engine/Rendering/Shaders/skyboxFrag.txt", PositionOnlyMeshVertexData.ShaderAttributes),
+                RenderDataHandler.GenerateProgram("./Engine/Rendering/Standard/Shaders/skyboxVert.txt", "./Engine/Rendering/Standard/Shaders/skyboxFrag.txt", PositionOnlyMeshVertexData.ShaderAttributes),
                 RenderDataHandler.LoadCubeMap(new string[] {
                     "./Artwork/Skybox/right.png", "./Artwork/Skybox/left.png",
                     "./Artwork/Skybox/top.png", "./Artwork/Skybox/bottom.png",
@@ -71,20 +76,19 @@ namespace VoxelCraft
 
         private static void OnResize(ResizeEventArgs e)
         {
-            windowWidth = e.Width;
-            windowHeight = e.Height;
-            aspectRatio = (double)windowWidth / windowHeight;
+            WindowWidth = e.Width;
+            WindowHeight = e.Height;
+            AspectRatio = (double)WindowWidth / WindowHeight;
 
-            projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView((float)Mathmatics.ConvertToRadians(60), (float)aspectRatio, 0.01f, 1000);
+            projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView((float)Mathmatics.ConvertToRadians(60), (float)AspectRatio, 0.01f, 1000);
         }
 
         private static void OnRender(FrameEventArgs args)
         {
+            World.BeforeRender(args.Time);
             Graphics.BeforeRender();
 
             World.UpdateWorld(args.Time);
-
-            Graphics.BeforeRender();
 
             Graphics.UpdateProjectionMatrix(projectionMatrix);
 

@@ -7,16 +7,16 @@ namespace VoxelCraft.Rendering
     [StructLayout(LayoutKind.Sequential)]
     public struct PositionOnlyMeshVertexData
     {
-        public Vector3d Position;
+        public Vector3 Position;
 
-        public PositionOnlyMeshVertexData(Vector3d pos)
+        public PositionOnlyMeshVertexData(Vector3 pos)
         {
             Position = pos;
         }
 
         public unsafe static VertexAttributeEntry[] Attributes = new VertexAttributeEntry[]
         {
-            new VertexAttributeEntry(3, VertexAttribPointerType.Double, 0, false, sizeof(PositionOnlyMeshVertexData), 0, false),
+            new VertexAttributeEntry(3, VertexAttribPointerType.Float, 0, false, sizeof(PositionOnlyMeshVertexData), 0, false),
         };
 
         public static VertexShaderAttributeEntry[] ShaderAttributes = new VertexShaderAttributeEntry[]

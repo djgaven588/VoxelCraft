@@ -7,19 +7,21 @@ namespace VoxelCraft
         public const float PI = 3.1415926535897931f;
         public const float E = 2.7182818284590451f;
 
-        public static Matrix4x4 CreateTransformationMatrix(Vector3 translation, Quaternion rotation, Vector3 scale)
+        public static Matrix4x4 CreateTransformationMatrix(Vector3 translation, Vector3 rotation, Vector3 scale)
         {
             Matrix4x4 matrix = Matrix4x4.Identity;
 
             translation.Z = -translation.Z;
 
             matrix *= Matrix4x4.CreateScale(scale);
-            matrix *= Matrix4x4.CreateFromQuaternion(rotation);
+            matrix *= Matrix4x4.CreateRotationY(ConvertToRadians(rotation.Y));
+            matrix *= Matrix4x4.CreateRotationX(ConvertToRadians(rotation.X));
+            matrix *= Matrix4x4.CreateRotationZ(ConvertToRadians(rotation.Z));
             matrix *= Matrix4x4.CreateTranslation(translation);
             return matrix;
         }
 
-        public static Matrix4x4 CreateViewMatrix(Vector3 position, Quaternion rotation)
+        public static Matrix4x4 CreateViewMatrix(Vector3 position, Vector3 rotation)
         {
             Matrix4x4 matrix = Matrix4x4.Identity;
 
@@ -27,7 +29,9 @@ namespace VoxelCraft
 
             Vector3 negativeCameraPos = -position;
             matrix *= Matrix4x4.CreateTranslation(negativeCameraPos);
-            matrix *= Matrix4x4.CreateFromQuaternion(new Quaternion(rotation.X, rotation.Y, rotation.Z, rotation.W));
+            matrix *= Matrix4x4.CreateRotationY(ConvertToRadians(rotation.Y));
+            matrix *= Matrix4x4.CreateRotationX(ConvertToRadians(rotation.X));
+            matrix *= Matrix4x4.CreateRotationZ(ConvertToRadians(rotation.Z));
             return matrix;
         }
 

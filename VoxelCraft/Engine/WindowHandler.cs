@@ -5,6 +5,7 @@ using System;
 using System.ComponentModel;
 using System.Threading;
 using VoxelCraft.Rendering;
+using VoxelCraft.Rendering.Standard;
 
 namespace VoxelCraft
 {

@@ -6,8 +6,7 @@ namespace VoxelCraft.Rendering
 {
     public class Camera
     {
-        public Vector2 Angle;
-        public Quaternion Rotation;
+        public Vector3 Rotation;
         public Vector3 Position = new Vector3(0, 0, -5);
 
         public Camera(float x, float y, float z)
@@ -27,14 +26,12 @@ namespace VoxelCraft.Rendering
                 movement = (movement / movement.Length()) * timeDelta * 16;
             }
 
-            var ang = InputManager.MouseDelta() * timeDelta * 5;
-            Angle += new Vector2(ang.X, ang.Y);
+            var ang = InputManager.MouseDelta().Yx * timeDelta * 5;
+            Rotation += new Vector3(ang.X, ang.Y, 0);
 
-            Angle.Y = Math.Clamp(Angle.Y, -90, 90);
+            Rotation.X = Math.Clamp(Rotation.X, -90, 90);
 
-            Position += Vector3.Transform(movement, Quaternion.CreateFromYawPitchRoll(0, Mathmatics.ConvertToRadians(Angle.Y), 0));//Mathmatics.TransformUnitZ(Quaternion.CreateFromYawPitchRoll(Mathmatics.ConvertToRadians(Angle.Y), 0, 0)) * movement;//new Quaterniond(temp.X, temp.Y, temp.Z, temp.W) * movement;
-
-            Rotation = Quaternion.CreateFromYawPitchRoll(Mathmatics.ConvertToRadians(Angle.X), Mathmatics.ConvertToRadians(Angle.Y), 0);
+            Position += Vector3.Transform(movement, Quaternion.CreateFromYawPitchRoll(Mathmatics.ConvertToRadians(Rotation.Y), 0, 0));
         }
     }
 }

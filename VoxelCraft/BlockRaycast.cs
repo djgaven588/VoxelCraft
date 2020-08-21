@@ -1,232 +1,162 @@
 ﻿using System;
 using System.Numerics;
 
+// The below code is heavily based off of
+// https://gist.github.com/dogfuntom/cc881c8fc86ad43d55d8
+// It has been modified in order to work how I want it to
+// but it is still based off of the initial implementation.
+
 namespace VoxelCraft
 {
     public static class BlockRaycast
     {
-        public struct RaycastData
+        public static (bool, Coordinate, Coordinate) Raycast(Vector3 origin, Vector3 direction, float radius)
         {
-            public Coordinate Chunk;
-            public Coordinate Block;
+            // From "A Fast Voxel Traversal Algorithm for Ray Tracing"
+            // by John Amanatides and Andrew Woo, 1987
+            // <http://www.cse.yorku.ca/~amana/research/grid.pdf>
+            // <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.42.3443>
+            // Extensions to the described algorithm:
+            //   • Imposed a distance limit.
+            //   • The face passed through to reach the current cube is provided to
+            //     the callback.
 
-            public BlockData BlockData;
+            // The foundation of this algorithm is a parameterized representation of
+            // the provided ray,
+            //                    origin + t * direction,
+            // except that t is not actually stored; rather, at any given point in the
+            // traversal, we keep track of the *greater* t values which we would have
+            // if we took a step sufficient to cross a cube boundary along that axis
+            // (i.e. change the integer part of the coordinate) in the variables
+            // tMaxX, tMaxY, and tMaxZ.
 
-            public byte HitSide;
+            Coordinate currentCube = new Coordinate((int)MathF.Floor(origin.X), (int)MathF.Floor(origin.Y), (int)MathF.Floor(origin.Z));
 
-            public bool HitBlock;
-            public bool RayTrapped;
+            // Break out direction vector.
+            var dx = direction.X;
+            var dy = direction.Y;
+            var dz = direction.Z;
 
-            public double DistanceRemaining;
+            // Direction to increment x,y,z when stepping.
+            var stepX = DirectionToIncrement(dx);
+            var stepY = DirectionToIncrement(dy);
+            var stepZ = DirectionToIncrement(dz);
 
-            public RaycastData(bool failed = true)
+            // See description above. The initial values depend on the fractional
+            // part of the origin.
+            var tMaxX = DistanceToGridIntersect(origin.X, dx);
+            var tMaxY = DistanceToGridIntersect(origin.Y, dy);
+            var tMaxZ = DistanceToGridIntersect(origin.Z, dz);
+
+            // The change in t when taking a step (always positive).
+            var tDeltaX = stepX / dx;
+            var tDeltaY = stepY / dy;
+            var tDeltaZ = stepZ / dz;
+
+            // Buffer for reporting faces to the callback.
+            var face = new Coordinate();
+
+            // Avoids an infinite loop.
+            if (dx == 0 && dy == 0 && dz == 0)
+                throw new Exception("Ray-cast in zero direction!");
+
+            // Rescale from units of 1 cube-edge to units of 'direction' so we can
+            // compare with 't'.
+            radius /= MathF.Sqrt(dx * dx + dy * dy + dz * dz);
+
+            while (true)
             {
-                Chunk = new Coordinate();
-                Block = new Coordinate();
-                BlockData = new BlockData();
-                HitSide = 0;
-                HitBlock = false;
-                RayTrapped = false;
-                DistanceRemaining = 0;
+                // Check if current position is a hit block
+                if (IsBlockHit(currentCube))
+                {
+                    return (true, currentCube, face);
+                }
+
+                // tMaxX stores the t-value at which we cross a cube boundary along the
+                // X axis, and similarly for Y and Z. Therefore, choosing the least tMax
+                // chooses the closest cube boundary. Only the first case of the four
+                // has been commented in detail.
+                if (tMaxX < tMaxY)
+                {
+                    if (tMaxX < tMaxZ)
+                    {
+                        if (tMaxX > radius)
+                            return (false, new Coordinate(), new Coordinate());
+                        // Update which cube we are now in.
+                        currentCube.X += stepX;
+                        // Adjust tMaxX to the next X-oriented boundary crossing.
+                        tMaxX += tDeltaX;
+                        // Record the normal vector of the cube face we entered.
+                        face.X = -stepX;
+                        face.Y = 0;
+                        face.Z = 0;
+                    }
+                    else
+                    {
+                        if (tMaxZ > radius)
+                            return (false, new Coordinate(), new Coordinate());
+                        currentCube.Z += stepZ;
+                        tMaxZ += tDeltaZ;
+                        face.X = 0;
+                        face.Y = 0;
+                        face.Z = -stepZ;
+                    }
+                }
+                else
+                {
+                    if (tMaxY < tMaxZ)
+                    {
+                        if (tMaxY > radius)
+                            return (false, new Coordinate(), new Coordinate());
+                        currentCube.Y += stepY;
+                        tMaxY += tDeltaY;
+                        face.X = 0;
+                        face.Y = -stepY;
+                        face.Z = 0;
+                    }
+                    else
+                    {
+                        // Identical to the second case, repeated for simplicity in
+                        // the conditionals.
+                        if (tMaxZ > radius)
+                            return (false, new Coordinate(), new Coordinate());
+                        currentCube.Z += stepZ;
+                        tMaxZ += tDeltaZ;
+                        face.X = 0;
+                        face.Y = 0;
+                        face.Z = -stepZ;
+                    }
+                }
             }
         }
 
-        public static RaycastData FindBlock(Vector3 startPosition, Vector3 direction, float distance)
+        private static bool IsBlockHit(Coordinate pos)
         {
-            Coordinate currentChunk = Coordinate.WorldToChunk(startPosition);
-            Coordinate currentBlock = Coordinate.WorldToBlock(startPosition);
-            // CHECK THIS WORLD_TO_BLOCK METHOD
-
-            World.LoadedChunks.TryGetValue(currentChunk, out ChunkData searchingChunk);
-            byte hitSide = 0;
-
-            Vector3 currentPosition = startPosition;
-            float startDistance = distance;
-
-            if(searchingChunk == null)
-            {
-                return new RaycastData(failed: true);
-            }
-            else if(searchingChunk.Data[currentBlock.X + currentBlock.Y * ChunkData.CHUNK_SIZE + currentBlock.Z * ChunkData.CHUNK_SIZE_SQR].BlockID != 0)
-            {
-                return new RaycastData()
-                {
-                    Block = currentBlock,
-                    Chunk = currentChunk,
-                    HitBlock = true,
-                    RayTrapped = true,
-                    BlockData = new BlockData(),
-                    HitSide = 0
-                };
-            }
-
-            while(distance > 0)
-            {
-                float distanceX = GetDistance(currentPosition.X, direction.X, startDistance);
-                float distanceY = GetDistance(currentPosition.Y, direction.Y, startDistance);
-                float distanceZ = GetDistance(currentPosition.Z, direction.Z, startDistance);
-
-                Coordinate lastChunk = currentChunk;
-
-                if (distanceX <= distanceY && distanceX <= distanceZ)
-                {
-                    if(direction.X >= 0)
-                    {
-                        if(currentBlock.X == ChunkData.CHUNK_SIZE_MINUS_ONE)
-                        {
-                            currentBlock.X = 0;
-                            currentChunk.X++;
-                        }
-                        else
-                        {
-                            currentBlock.X++;
-                        }
-
-                        hitSide = 3; // Left side, west
-                    }
-                    else
-                    {
-                        if (currentBlock.X == 0)
-                        {
-                            currentBlock.X = ChunkData.CHUNK_SIZE_MINUS_ONE;
-                            currentChunk.X--;
-                        }
-                        else
-                        {
-                            currentBlock.X--;
-                        }
-
-                        hitSide = 2; // Right side, east
-                    }
-
-                    currentPosition += direction * distanceX;
-                    distance -= distanceX;
-                }
-                else if (distanceY <= distanceX && distanceY <= distanceZ)
-                {
-                    if (direction.Y >= 0)
-                    {
-                        if (currentBlock.Y == ChunkData.CHUNK_SIZE_MINUS_ONE)
-                        {
-                            currentBlock.Y = 0;
-                            currentChunk.Y++;
-                        }
-                        else
-                        {
-                            currentBlock.Y++;
-                        }
-
-                        hitSide = 5; // Bottom side
-                    }
-                    else
-                    {
-                        if (currentBlock.Y == 0)
-                        {
-                            currentBlock.Y = ChunkData.CHUNK_SIZE_MINUS_ONE;
-                            currentChunk.Y--;
-                        }
-                        else
-                        {
-                            currentBlock.Y--;
-                        }
-
-                        hitSide = 4; // Top side
-                    }
-
-                    currentPosition += direction * distanceY;
-                    distance -= distanceY;
-                }
-                else if (distanceZ <= distanceX && distanceZ <= distanceY)
-                {
-                    if (direction.Z >= 0)
-                    {
-                        if (currentBlock.Z == ChunkData.CHUNK_SIZE_MINUS_ONE)
-                        {
-                            currentBlock.Z = 0;
-                            currentChunk.Z++;
-                        }
-                        else
-                        {
-                            currentBlock.Z++;
-                        }
-
-                        hitSide = 1; // Back side, south
-                    }
-                    else
-                    {
-                        if (currentBlock.Z == 0)
-                        {
-                            currentBlock.Z = ChunkData.CHUNK_SIZE_MINUS_ONE;
-                            currentChunk.Z--;
-                        }
-                        else
-                        {
-                            currentBlock.Z--;
-                        }
-
-                        hitSide = 0; // Front side, north
-                    }
-
-                    currentPosition += direction * distanceZ;
-                    distance -= distanceZ;
-                }
-
-                //Graphics.QueueDraw(World.TestMaterial, PrimitiveMeshes.Cube, Mathmatics.CreateTransformationMatrix(currentPosition + new Vector3d(0, -0.2, 0), Quaterniond.Identity, Vector3d.One * 0.25));
-
-                if (lastChunk != currentChunk)
-                {
-                    World.LoadedChunks.TryGetValue(currentChunk, out searchingChunk);
-                }
-
-                if(searchingChunk == null)
-                {
-                    return new RaycastData(failed: true);
-                }
-
-                BlockData dat = searchingChunk.Data[currentBlock.X + currentBlock.Y * ChunkData.CHUNK_SIZE + currentBlock.Z * ChunkData.CHUNK_SIZE_SQR];
-                if(dat.BlockID != 0)
-                {
-                    return new RaycastData()
-                    {
-                        Block = currentBlock,
-                        BlockData = dat,
-                        Chunk = currentChunk,
-                        DistanceRemaining = distance,
-                        HitBlock = true,
-                        HitSide = hitSide,
-                        RayTrapped = false
-                    };
-                }
-            }
-
-            return new RaycastData();
+            return (!World.LoadedChunks.TryGetValue(pos.WorldToChunk(), out ChunkData data) || data.Data[Coordinate.BlockToIndex(pos.WorldToBlock())].BlockID != 0);
         }
 
-        private static float GetDistance(float location, float direction, float maxDistance)
+        private static int DirectionToIncrement(float x)
         {
-            if((direction > 0.001 && direction < -0.001) || direction > 20 || direction < -20)
-            {
-                return float.MaxValue;
-            }
+            return x > 0 ? 1 : x < 0 ? -1 : 0;
+        }
 
-            double value;
-            if (direction >= 0)
-            {
-                value = Math.Ceiling(Math.Abs(location) + 0.00000001) - Math.Abs(location);
-            }
-            else
-            {
-                value = Math.Abs(location) - Math.Floor(Math.Abs(location) - 0.00000001);
-            }
+        private static float DistanceToGridIntersect(float s, float ds)
+        {
+            // Some kind of edge case, see:
+            // http://gamedev.stackexchange.com/questions/47362/cast-ray-to-select-block-in-voxel-game#comment160436_49423
+            var sIsInteger = Math.Round(s) == s;
+            if (ds < 0 && sIsInteger)
+                return 0;
 
-            value /= Math.Abs(direction);
+            return (float)(ds > 0 ? CustomCeil(s) - s : s - Math.Floor(s)) / Math.Abs(ds);
+        }
 
-            if(value > maxDistance || value < -maxDistance)
-            {
-                return float.MaxValue;
-            }
-
-            return (float)value;
+        private static float CustomCeil(float s) 
+        {
+            if (s == 0f) 
+                return 1f; 
+            else 
+                return (float)Math.Ceiling(s); 
         }
     }
 }

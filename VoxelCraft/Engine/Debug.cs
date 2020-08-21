@@ -1,5 +1,6 @@
 ﻿using OpenToolkit.Graphics.OpenGL4;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
@@ -56,6 +57,34 @@ namespace VoxelCraft
         private static void ChangeConsoleColor(ConsoleColor color)
         {
             Console.ForegroundColor = color;
+        }
+    }
+
+    public class RollingAverageDebug<T>
+    {
+        private T[] KeptData;
+        private int CurrentIndex;
+
+        public RollingAverageDebug(int entryCount)
+        {
+            KeptData = new T[entryCount];
+        }
+
+        public void AddData(T data)
+        {
+            if(CurrentIndex >= KeptData.Length)
+            {
+                CurrentIndex = 0;
+            }
+
+            KeptData[CurrentIndex] = data;
+
+            CurrentIndex++;
+        }
+
+        public T[] GetData()
+        {
+            return KeptData;
         }
     }
 }

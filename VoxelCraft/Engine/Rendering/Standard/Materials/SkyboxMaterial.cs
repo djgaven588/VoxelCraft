@@ -1,6 +1,7 @@
 ﻿using OpenToolkit.Graphics.OpenGL4;
+using VoxelCraft.Rendering;
 
-namespace VoxelCraft.Rendering
+namespace VoxelCraft.Engine.Rendering.Standard.Materials
 {
     public class SkyboxMaterial : Material
     {

@@ -55,6 +55,11 @@ namespace VoxelCraft.Rendering
             GL.ProgramUniform3(ProgramID, location, vector.X, vector.Y, vector.Z);
         }
 
+        public void LoadColor4(int location, OpenToolkit.Mathematics.Color4 color)
+        {
+            GL.ProgramUniform4(ProgramID, location, color.R, color.B, color.G, color.A);
+        }
+
         public virtual void BeforeRenderGroup()
         {
             if (_textureID != 0)

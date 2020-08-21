@@ -1,6 +1,8 @@
 ﻿using OpenToolkit.Graphics.OpenGL4;
 using System.Collections.Generic;
 using System.Numerics;
+using VoxelCraft.Engine.Rendering.Standard.Materials;
+using VoxelCraft.Rendering.Standard;
 
 namespace VoxelCraft.Rendering
 {
@@ -26,10 +28,6 @@ namespace VoxelCraft.Rendering
             GL.CullFace(CullFaceMode.Back);
 
             GL.FrontFace(FrontFaceDirection.Cw);
-
-            //GL.Enable(EnableCap.Blend);
-            //GL.BlendEquation(BlendEquationMode.FuncAdd);
-            //GL.BlendFunc(BlendingFactor.One, BlendingFactor.One);
         }
 
         public static void BeforeRender()
@@ -37,6 +35,7 @@ namespace VoxelCraft.Rendering
             if (Camera != null)
             {
                 UpdateCameraMatrix(Mathmatics.CreateViewMatrix(Camera.Position, Camera.Rotation));
+                UIOrthographic = Matrix4x4.CreateOrthographic(EntryPoint.WindowWidth, EntryPoint.WindowHeight, 0.01f, 1000f);
             }
             else
             {
@@ -94,7 +93,8 @@ namespace VoxelCraft.Rendering
 
             if (SkyboxMaterial != null)
             {
-                DrawNow(SkyboxMaterial, PrimitiveMeshes.Skybox, Matrix4x4.CreateFromQuaternion(Camera.Rotation) * ProjectionMatrix/*Matrix4x4.Transform(ProjectionMatrix, Camera.Rotation)*/, Matrix4x4.Identity);
+                Matrix4x4 rot = Matrix4x4.CreateRotationY(Mathmatics.ConvertToRadians(Camera.Rotation.Y)) * Matrix4x4.CreateRotationX(Mathmatics.ConvertToRadians(Camera.Rotation.X)) * Matrix4x4.CreateRotationZ(Mathmatics.ConvertToRadians(Camera.Rotation.Z));
+                DrawNow(SkyboxMaterial, PrimitiveMeshes.Skybox, rot * ProjectionMatrix, Matrix4x4.Identity);
             }
         }
 
@@ -209,6 +209,17 @@ namespace VoxelCraft.Rendering
             {
                 renderingQueue[mesh][material].Enqueue(transformMatrix[i]);
             }
+        }
+
+        private static Matrix4x4 UIOrthographic;
+
+        public static Matrix4x4 GetUIMatrix(Vector2 position, float scale, bool centered = false)
+        {
+            float width = EntryPoint.WindowWidth;
+            float height = EntryPoint.WindowHeight;
+            float uiScale = width > height ? width / 1920 : height / 1080;
+
+            return Mathmatics.CreateTransformationMatrix(new Vector3(centered ? 0 : (- width / 2) + position.X * uiScale, centered ? 0 : (height / 2) - position.Y * uiScale, 0), Vector3.Zero, Vector3.One * uiScale * scale) * UIOrthographic;
         }
     }
 }

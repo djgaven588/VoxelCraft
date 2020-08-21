@@ -26,6 +26,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Engine\Rendering\TextMeshGenerator.cs~RF205cca.TMP" />
+    <None Remove="Engine\Rendering\UI\TextMeshGenerator.cs~RF59a92f.TMP" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="OpenTK" Version="4.0.0-pre9.1" />
     <PackageReference Include="System.Drawing.Common" Version="5.0.0-preview.3.20214.6" />
   </ItemGroup>
@@ -73,21 +78,37 @@
     <None Update="chunkVertex.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Engine\Rendering\Shaders\fragment.txt">
+    <None Update="Engine\Rendering\Standard\Shaders\fragment.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Engine\Rendering\Shaders\skyboxFrag.txt">
+    <None Update="Engine\Rendering\Standard\Shaders\skyboxFrag.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Engine\Rendering\Shaders\skyboxVert.txt">
+    <None Update="Engine\Rendering\Standard\Shaders\skyboxVert.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Artwork\Tree.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Engine\Rendering\Shaders\vertex.txt">
+    <None Update="Engine\Rendering\Standard\Shaders\UIFragment.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Engine\Rendering\Standard\Shaders\UIVertex.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Engine\Rendering\Standard\Shaders\vertex.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Font\Arial.fnt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Font\Arial.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Font\" />
   </ItemGroup>
 
 </Project>

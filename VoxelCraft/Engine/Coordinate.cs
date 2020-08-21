@@ -24,6 +24,18 @@ namespace VoxelCraft
             Z = z;
         }
 
+        public Coordinate(Vector3 pos)
+        {
+            X = (int)Math.Floor(pos.X);
+            Y = (int)Math.Floor(pos.Y);
+            Z = (int)Math.Floor(pos.Z);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int BlockToIndex(Coordinate coord)
+        {
+            return coord.X + coord.Y * ChunkData.CHUNK_SIZE + coord.Z * ChunkData.CHUNK_SIZE_SQR;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 ToVector(Coordinate coord)
         {
@@ -33,13 +45,31 @@ namespace VoxelCraft
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Coordinate WorldToChunk(Vector3 position)
         {
-            return new Coordinate((int)position.X >> ChunkData.CHUNK_LOG_SIZE, (int)position.Y >> ChunkData.CHUNK_LOG_SIZE, (int)position.Z >> ChunkData.CHUNK_LOG_SIZE);
+            Coordinate chunk = new Coordinate(position);
+            chunk.X = chunk.X >> ChunkData.CHUNK_LOG_SIZE;
+            chunk.Y = chunk.Y >> ChunkData.CHUNK_LOG_SIZE;
+            chunk.Z = chunk.Z >> ChunkData.CHUNK_LOG_SIZE;
+            return chunk;//new Coordinate((int)position.X >> ChunkData.CHUNK_LOG_SIZE, (int)position.Y >> ChunkData.CHUNK_LOG_SIZE, (int)position.Z >> ChunkData.CHUNK_LOG_SIZE);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Coordinate WorldToBlock(Vector3 position)
         {
-            return new Coordinate((int)position.X & ChunkData.CHUNK_SIZE_MINUS_ONE, (int)position.Y & ChunkData.CHUNK_SIZE_MINUS_ONE, (int)position.Z & ChunkData.CHUNK_SIZE_MINUS_ONE);
+            Coordinate block = new Coordinate(position);
+            block.X = block.X & ChunkData.CHUNK_SIZE_MINUS_ONE;
+            block.Y = block.Y & ChunkData.CHUNK_SIZE_MINUS_ONE;
+            block.Z = block.Z & ChunkData.CHUNK_SIZE_MINUS_ONE;
+            return block;//new Coordinate((int)position.X & ChunkData.CHUNK_SIZE_MINUS_ONE, (int)position.Y & ChunkData.CHUNK_SIZE_MINUS_ONE, (int)position.Z & ChunkData.CHUNK_SIZE_MINUS_ONE);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Coordinate WorldToBlock()
+        {
+            Coordinate block = this;
+            block.X = block.X & ChunkData.CHUNK_SIZE_MINUS_ONE;
+            block.Y = block.Y & ChunkData.CHUNK_SIZE_MINUS_ONE;
+            block.Z = block.Z & ChunkData.CHUNK_SIZE_MINUS_ONE;
+            return block;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
