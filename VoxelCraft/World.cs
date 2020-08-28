@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Numerics;
 using VoxelCraft.Engine.Rendering;
+using VoxelCraft.Engine.Rendering.Standard;
 using VoxelCraft.Engine.Rendering.Standard.Materials;
 using VoxelCraft.Engine.Rendering.UI;
 using VoxelCraft.Rendering;
@@ -13,55 +14,34 @@ namespace VoxelCraft
     public static class World
     {
         public static ConcurrentDictionary<Coordinate, ChunkData> LoadedChunks = new ConcurrentDictionary<Coordinate, ChunkData>();
-        public static Coordinate WorldCenter;
-        public static Material ChunkMaterial;
-        public static UIMaterial WhiteTextMaterial;
-        public static UIMaterial BlackTextMaterial;
-        public static UIMaterial UIMeshTest;
+        public static Coordinate PlayerChunk;
+        
+        public static UIMaterial Crosshair;
         public static Material TestMaterial;
         public static int RenderDistance = 5;
         public static Camera Camera;
-
-        public static FontData ArialFont;
-        public static Mesh DebugTextMesh = null;
-
-        private static RollingAverageDebug<(int, int, int)> updateDebug = new RollingAverageDebug<(int, int, int)>(60);
 
         public static int TerrainUpdate = 0;
         public static int StructureUpdate = 0;
         public static int MeshUpdate = 0;
 
+        private static RollingAverageDebug<(int, int, int)> updateDebug = new RollingAverageDebug<(int, int, int)>(60);
+
+        private static DebugUI _debugMenu;
+
         public static void Initialize()
         {
-            ArialFont = new FontData("./Font/Arial.png", "./Font/Arial.fnt", 1024);
-
-            ChunkMaterial = new ChunkMaterial(
-                RenderDataHandler.GenerateProgram("chunkVertex.txt", "chunkFragment.txt", ChunkBlockVertexData.ShaderAttributes),
-                RenderDataHandler.LoadTextureArray(new string[] {
-                    "./Artwork/GrassTop.png", "./Artwork/GrassSide.png",
-                    "./Artwork/Dirt.png", "./Artwork/Wood.png",
-                    "./Artwork/WoodTop.png", "./Artwork/Leaf.png" }, 16, 16));
-
-            WhiteTextMaterial = new UIMaterial(
-                RenderDataHandler.GenerateProgram("./Engine/Rendering/Standard/Shaders/UIVertex.txt", "./Engine/Rendering/Standard/Shaders/UIFragment.txt", UIVertexData.ShaderAttributes),
-                ArialFont.TextureId);
-
-            BlackTextMaterial = new UIMaterial(
-                RenderDataHandler.GenerateProgram("./Engine/Rendering/Standard/Shaders/UIVertex.txt", "./Engine/Rendering/Standard/Shaders/UIFragment.txt", UIVertexData.ShaderAttributes),
-                ArialFont.TextureId);
-
-            WhiteTextMaterial.ChangeColor(OpenToolkit.Mathematics.Color4.White);
-            BlackTextMaterial.ChangeColor(OpenToolkit.Mathematics.Color4.Black);
+            _debugMenu = new DebugUI();
 
             TestMaterial = new Material(
                 RenderDataHandler.GenerateProgram("./Engine/Rendering/Standard/Shaders/vertex.txt", "./Engine/Rendering/Standard/Shaders/fragment.txt", StandardMeshVertexData.ShaderAttributes),
                 RenderDataHandler.LoadTexture("./Artwork/Dirt.png"));
 
-            UIMeshTest = new UIMaterial(
+            Crosshair = new UIMaterial(
                 RenderDataHandler.GenerateProgram("./Engine/Rendering/Standard/Shaders/UIVertex.txt", "./Engine/Rendering/Standard/Shaders/UIFragment.txt", UIVertexData.ShaderAttributes),
                 RenderDataHandler.LoadTexture("./Artwork/Dirt.png"));
 
-            UIMeshTest.ChangeColor(OpenToolkit.Mathematics.Color4.White);
+            Crosshair.ChangeColor(OpenToolkit.Mathematics.Color4.White);
 
             Camera = new Camera(0, 80, 0);
 
@@ -85,26 +65,44 @@ namespace VoxelCraft
 
         public static void UpdateWorld(double timeDelta)
         {
-            (bool found, Coordinate pos, Coordinate face) = BlockRaycast.Raycast(Camera.Position, ForwardVector(Camera.Rotation), 10);
+            (bool raycastHit, Coordinate pos, Coordinate face) = BlockRaycast.Raycast(Camera.Position, ForwardVector(Camera.Rotation), 10);
 
-            if (found)
+            if (raycastHit)
             {
                 // We maybe hit something, we need to check though as we could have hit a missing chunk.
                 if(LoadedChunks.TryGetValue(pos.WorldToChunk(), out ChunkData chunk))
                 {
                     // We hit something! Let's display the results.
-                    Graphics.QueueDraw(TestMaterial, PrimitiveMeshes.Cube, Mathmatics.CreateTransformationMatrix(pos.ToVector() + Vector3.One * 0.5f, Vector3.Zero, Vector3.One));
+                    //Graphics.QueueDraw(TestMaterial, PrimitiveMeshes.Cube, Mathmatics.CreateTransformationMatrix(pos.ToVector() + Vector3.One * 0.5f, Vector3.Zero, Vector3.One));
                     Graphics.QueueDraw(TestMaterial, PrimitiveMeshes.Cube, Mathmatics.CreateTransformationMatrix((pos).ToVector() + Vector3.One * 0.5f + face.ToVector() * 0.75f, Vector3.Zero, Vector3.One / 2));
+
+                    if (InputManager.IsMouseNowDown(OpenToolkit.Windowing.Common.Input.MouseButton.Button1))
+                    {
+                        chunk.ModifyBlock(pos, BlockDatabase.IDToBlockData[0], true);
+                    }
+                    else if (InputManager.IsMouseNowDown(OpenToolkit.Windowing.Common.Input.MouseButton.Button2))
+                    {
+                        ChunkData toModify = chunk;
+                        Coordinate placeChunk = (pos + face).WorldToChunk();
+                        Coordinate placePosition = (pos + face).WorldToBlock();
+
+                        if (placeChunk != chunk.ChunkPosition)
+                        {
+                            LoadedChunks.TryGetValue(placeChunk, out toModify);
+                        }
+                        
+                        toModify?.ModifyBlock(placePosition, BlockDatabase.IDToBlockData[2], false);
+                    }
                 }
             }
 
-            WorldCenter = Coordinate.WorldToChunk(Camera.Position);
+            PlayerChunk = Coordinate.WorldToChunk(Camera.Position);
 
             ChunkOperationDispatcher.RunActionsWaitingForMainThread();
 
-            ChunkHandler.CheckToUnload(WorldCenter);
-            ChunkHandler.CheckToLoadAndUpdate(WorldCenter);
-            ChunkHandler.CheckToRender(WorldCenter);
+            ChunkHandler.CheckToUnload(PlayerChunk);
+            ChunkHandler.CheckToLoadAndUpdate(PlayerChunk);
+            ChunkHandler.CheckToRender(PlayerChunk);
 
             updateDebug.AddData((TerrainUpdate, StructureUpdate, MeshUpdate));
 
@@ -121,16 +119,64 @@ namespace VoxelCraft
             StructureUpdate = 0;
             MeshUpdate = 0;
 
-            Graphics.QueueDraw(UIMeshTest, PrimitiveMeshes.CenteredQuad, Graphics.GetUIMatrix(new Vector2(0, 0), 25, true));
+            _debugMenu.AddDebugData($"Chunk Updates (Last Second)\n- Terrain: {totalTerrain}\n- Structure: {totalStructure}\n- Mesh: {totalMesh}");
+            _debugMenu.AddDebugData($"Position: {Camera.Position}\nLook Direction: {ForwardVector(Camera.Rotation)}");
+            _debugMenu.AddDebugData($"Chunk: {Coordinate.WorldToChunk(Camera.Position)}\nBlock: {Coordinate.WorldToBlock(Camera.Position)}");
+            _debugMenu.AddDebugData($"World Block: {new Coordinate(Camera.Position)}");
 
-            string text = $"Chunk Updates (Last Second)\n- Terrain: {totalTerrain}\n- Structure: {totalStructure}\n- Mesh: {totalMesh}\n\n" +
-                $"Position: {Camera.Position}\nLook Direction: {ForwardVector(Camera.Rotation)}\n" +
-                $"Chunk: {Coordinate.WorldToChunk(Camera.Position)}\nBlock: {Coordinate.WorldToBlock(Camera.Position)}\n" +
-                //$"Hit block: {data.HitBlock} - {data.Block} - {data.Chunk}\n" + 
-                $"World Block: {new Coordinate(Camera.Position)}";
-            DebugTextMesh = TextMeshGenerator.RegenerateMesh(text, ArialFont, 10, 50, OpenToolkit.Mathematics.Color4.Black, 18, 0.9f, DebugTextMesh);
-            Graphics.QueueDraw(WhiteTextMaterial, DebugTextMesh, Graphics.GetUIMatrix(Vector2.One * 50, 1));
-            Graphics.QueueDraw(BlackTextMaterial, DebugTextMesh, Graphics.GetUIMatrix(Vector2.One * 48, 1));
+            if (raycastHit)
+            {
+                _debugMenu.AddDebugData($"Hit block: {pos}\nSide: {face}");
+            }
+
+            _debugMenu.Update(0f);
+
+            _debugMenu.Draw();
+
+            Graphics.QueueDraw(Crosshair, PrimitiveMeshes.CenteredQuad, Graphics.GetUIMatrix(new Vector2(0, 0), 25, new UIPosition(Vector2.One * 0.5f, Vector2.Zero)));
+        }
+
+        /// <summary>
+        /// Marks bordering chunks to the provided position for mesh regen.
+        /// </summary>
+        /// <param name="chunkPosition"></param>
+        /// <param name="blockPosition"></param>
+        public static void MarkNearbyChunksForRegen(Coordinate chunkPosition, Coordinate blockPosition)
+        {
+            void MarkChunk(Coordinate chunk)
+            {
+                if (LoadedChunks.TryGetValue(chunk, out ChunkData c))
+                {
+                    c.MarkForRegen();
+                }
+            }
+
+            if(blockPosition.X == 0)
+            {
+                MarkChunk(chunkPosition + Coordinate.Left);
+            }
+            else if(blockPosition.X == ChunkData.CHUNK_SIZE_MINUS_ONE)
+            {
+                MarkChunk(chunkPosition + Coordinate.Right);
+            }
+
+            if (blockPosition.Y == 0)
+            {
+                MarkChunk(chunkPosition + Coordinate.Down);
+            }
+            else if (blockPosition.Y == ChunkData.CHUNK_SIZE_MINUS_ONE)
+            {
+                MarkChunk(chunkPosition + Coordinate.Up);
+            }
+
+            if (blockPosition.Z == 0)
+            {
+                MarkChunk(chunkPosition + Coordinate.Backward);
+            }
+            else if (blockPosition.Z == ChunkData.CHUNK_SIZE_MINUS_ONE)
+            {
+                MarkChunk(chunkPosition + Coordinate.Forward);
+            }
         }
 
         public static Vector3 ForwardVector(Vector3 euler)
@@ -146,7 +192,7 @@ namespace VoxelCraft
             {
                 if (chunk.Mesh != null)
                 {
-                    chunk.Mesh.RemoveMesh();
+                    chunk.Mesh.CleanUp();
                     Debug.Log("DELETE MESH CHUNK");
                 }
 
@@ -208,7 +254,7 @@ namespace VoxelCraft
             }
             else if (chunk.Mesh != null && chunk.Mesh.VertexCount > 0)
             {
-                Graphics.DrawNow(ChunkMaterial, chunk.Mesh, Mathmatics.CreateTransformationMatrix(chunk.ChunkPosition.ChunkToWorld().ToVector(), Vector3.Zero, Vector3.One));
+                Graphics.DrawNow(StandardMaterials.ChunkMaterial, chunk.Mesh, Mathmatics.CreateTransformationMatrix(chunk.ChunkPosition.ChunkToWorld().ToVector(), Vector3.Zero, Vector3.One));
             }
 
             if (chunk.RegenerateMesh && chunk.CurrentOperation == ChunkData.ChunkOperation.Ready)

@@ -30,10 +30,17 @@ namespace VoxelCraft
             Y = (int)Math.Floor(pos.Y);
             Z = (int)Math.Floor(pos.Z);
         }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int BlockToIndex(Coordinate coord)
         {
             return coord.X + coord.Y * ChunkData.CHUNK_SIZE + coord.Z * ChunkData.CHUNK_SIZE_SQR;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int BlockToIndex()
+        {
+            return X + Y * ChunkData.CHUNK_SIZE + Z * ChunkData.CHUNK_SIZE_SQR;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -165,5 +172,12 @@ namespace VoxelCraft
         {
             return !(a == b);
         }
+
+        public static Coordinate Left       = new Coordinate(-1, 0, 0);
+        public static Coordinate Right      = new Coordinate(1, 0, 0);
+        public static Coordinate Up         = new Coordinate(0, 1, 0);
+        public static Coordinate Down       = new Coordinate(0, -1, 0);
+        public static Coordinate Forward    = new Coordinate(0, 0, 1);
+        public static Coordinate Backward   = new Coordinate(0, 0, -1);
     }
 }

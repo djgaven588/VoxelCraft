@@ -4,6 +4,7 @@ using OpenToolkit.Windowing.Desktop;
 using System;
 using System.ComponentModel;
 using System.Threading;
+using VoxelCraft.Engine.Rendering.Standard;
 using VoxelCraft.Rendering;
 using VoxelCraft.Rendering.Standard;
 
@@ -18,6 +19,9 @@ namespace VoxelCraft
         private readonly Action<FrameEventArgs> _onRender;
         private readonly Action<CancelEventArgs> _onClosing;
 
+        public int Width;
+        public int Height;
+
         public WindowHandler(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings,
             Action onLoad, Action onClosed, Action<CancelEventArgs> onClosing, Action<ResizeEventArgs> onResize, Action<FrameEventArgs> onUpdate, Action<FrameEventArgs> onRender) : base(gameWindowSettings, nativeWindowSettings)
         {
@@ -27,6 +31,9 @@ namespace VoxelCraft
             _onClosing = onClosing;
             _onUpdate = onUpdate;
             _onRender = onRender;
+
+            Width = nativeWindowSettings.Size.X;
+            Height = nativeWindowSettings.Size.Y;
         }
 
         protected override void OnLoad()
@@ -35,6 +42,8 @@ namespace VoxelCraft
             InputManager.Initialize(this);
             InputManager.ChangeMouseState(true);
             PrimitiveMeshes.Init();
+            StandardFonts.Init();
+            StandardMaterials.Init();
             _onLoad?.Invoke();
         }
 
@@ -49,6 +58,8 @@ namespace VoxelCraft
         protected override void OnResize(ResizeEventArgs e)
         {
             GL.Viewport(0, 0, e.Width, e.Height);
+            Width = e.Width;
+            Height = e.Height;
             _onResize?.Invoke(e);
         }
 

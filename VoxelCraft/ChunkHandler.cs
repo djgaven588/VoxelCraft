@@ -19,7 +19,7 @@ namespace VoxelCraft
                 }
                 else if(chunk.Mesh != null && (coord.X > World.RenderDistance || coord.X < -World.RenderDistance || coord.Z > World.RenderDistance || coord.Z < -World.RenderDistance))
                 {
-                    chunk.Mesh.RemoveMesh();
+                    chunk.Mesh.CleanUp();
                     chunk.Mesh = null;
                     chunk.RegenerateMesh = true;
                 }

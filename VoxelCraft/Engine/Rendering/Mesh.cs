@@ -66,7 +66,7 @@ namespace VoxelCraft.Rendering
             IndiceCount = indiceCount;
         }
 
-        public void RemoveMesh()
+        public void CleanUp()
         {
             RenderDataHandler.DeleteVBO(VertexBuffer);
             RenderDataHandler.DeleteVBO(IndiceBuffer);

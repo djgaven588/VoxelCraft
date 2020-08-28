@@ -68,16 +68,17 @@ namespace VoxelCraft
                     IndiciesBuffer[indiciesCount++] = vertexCount + 3;
                     IndiciesBuffer[indiciesCount++] = vertexCount;
 
+                    uint lighting = (k == 4 ? 3u : k == 5 ? 1u : 2u);
 
                     for (uint j = 0; j < 4; j++)
                     {
-                        // X, Y, Z (6 bits each), normal index (3 bits), vertex index (2 bits, for texture mapping), texture index
+                        // X, Y, Z (6 bits each), lighting (2 bits), vertex index (2 bits, for texture mapping), texture index
                         VertexBuffer[vertexCount++].Data = (Face_Data[(k * 4) + j].X + blockPosX)
                                                            | ((Face_Data[(k * 4) + j].Y + blockPosY) << 6)
                                                            | ((Face_Data[(k * 4) + j].Z + blockPosZ) << 12)
-                                                           | (k << 18)
-                                                           | (j << 21)
-                                                           | ((uint)BlockDatabase.BlockTextures[chunk.Data[i].BlockID].Textures[k] << 23);
+                                                           | (lighting << 18) //(k << 18)
+                                                           | (j << 20)
+                                                           | ((uint)BlockDatabase.BlockTextures[chunk.Data[i].BlockID].Textures[k] << 22);
                     }
                 }
             }

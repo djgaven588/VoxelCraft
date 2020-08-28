@@ -30,6 +30,20 @@ namespace VoxelCraft
         public Mesh Mesh;
         public BlockData[] Data;
 
+        public void ModifyBlock(Coordinate pos, BlockData data, bool positionIsWorld = false, bool regenMesh = true)
+        {
+            // If we are using a world position, translate to local, either way we will convert the position to an index
+            Data[positionIsWorld ? pos.WorldToBlock().BlockToIndex() : pos.BlockToIndex()] = data;
+            RegenerateMesh = RegenerateMesh || regenMesh;
+
+            World.MarkNearbyChunksForRegen(ChunkPosition, positionIsWorld ? pos.WorldToBlock() : pos);
+        }
+
+        public void MarkForRegen()
+        {
+            RegenerateMesh = true;
+        }
+
         public ChunkData(Coordinate position)
         {
             RegenerateMesh = true;

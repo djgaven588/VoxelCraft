@@ -16,10 +16,10 @@ namespace VoxelCraft
         private static Vector2 mouseDeltaSinceLastFrame;
         private static Vector2 mouseDelta;
 
-        private static GameWindow gameWindow;
+        private static WindowHandler gameWindow;
         private static bool mouseMovementAccepted = true;
 
-        public static void Initialize(GameWindow window)
+        public static void Initialize(WindowHandler window)
         {
             gameWindow = window;
             window.MouseMove += OnMouseMove;
@@ -48,8 +48,7 @@ namespace VoxelCraft
             else
             {
                 gameWindow.CursorVisible = true;
-
-                gameWindow.MousePosition = new Vector2(gameWindow.ClientSize.X, gameWindow.ClientSize.Y) / 2;
+                gameWindow.MousePosition = new Vector2(gameWindow.Width, gameWindow.Height) / 2;
             }
 
             mouseMovementAccepted = false;

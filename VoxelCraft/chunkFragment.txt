@@ -4,6 +4,8 @@ out vec4 out_Color;
 
 in vec3 pass_textureCoords;
 
+in float lightValue;
+
 uniform sampler2DArray textureSampler;
 
 void main()
@@ -13,4 +15,6 @@ void main()
     {
         discard;
     }
+
+    out_Color = lightValue * out_Color;
 }

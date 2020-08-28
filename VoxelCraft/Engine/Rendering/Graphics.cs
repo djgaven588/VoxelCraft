@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Numerics;
 using VoxelCraft.Engine.Rendering.Standard.Materials;
+using VoxelCraft.Engine.Rendering.UI;
 using VoxelCraft.Rendering.Standard;
 
 namespace VoxelCraft.Rendering
@@ -213,13 +214,18 @@ namespace VoxelCraft.Rendering
 
         private static Matrix4x4 UIOrthographic;
 
-        public static Matrix4x4 GetUIMatrix(Vector2 position, float scale, bool centered = false)
+        public static Matrix4x4 GetUIMatrix(Vector2 offset, float scale, UIPosition position)
         {
             float width = EntryPoint.WindowWidth;
             float height = EntryPoint.WindowHeight;
             float uiScale = width > height ? width / 1920 : height / 1080;
 
-            return Mathmatics.CreateTransformationMatrix(new Vector3(centered ? 0 : (- width / 2) + position.X * uiScale, centered ? 0 : (height / 2) - position.Y * uiScale, 0), Vector3.Zero, Vector3.One * uiScale * scale) * UIOrthographic;
+            return Mathmatics.CreateTransformationMatrix(
+                new Vector3(
+                    width * -0.5f + width * position.Center.X + (position.Offset.X + offset.X) * uiScale,
+                    height * 0.5f - height * position.Center.Y - (position.Offset.X + offset.Y) * uiScale, 
+                    0),
+                Vector3.Zero, Vector3.One * uiScale * scale) * UIOrthographic;
         }
     }
 }
