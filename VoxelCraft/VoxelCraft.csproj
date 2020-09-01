@@ -66,6 +66,9 @@
     <None Update="Artwork\Skybox\top.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Artwork\Stone.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Artwork\Wood.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

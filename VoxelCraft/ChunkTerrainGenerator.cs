@@ -6,10 +6,19 @@ namespace VoxelCraft
     public static class ChunkTerrainGenerator
     {
         private static readonly OpenSimplexNoise Noise;
+        private static readonly BlockData AirBlock;
+        private static readonly BlockData SurfaceBlock;
+        private static readonly BlockData SubsurfaceBlock;
+        private static readonly BlockData BelowGroundBlock;
 
         static ChunkTerrainGenerator()
         {
             Noise = new OpenSimplexNoise(0);
+
+            AirBlock = BlockDatabase.NameToBlockData["Air"];
+            SurfaceBlock = BlockDatabase.NameToBlockData["Grass"];
+            SubsurfaceBlock = BlockDatabase.NameToBlockData["Dirt"];
+            BelowGroundBlock = BlockDatabase.NameToBlockData["Stone"];
         }
 
         public static void GenerateTerrain(ref ChunkData chunk)
@@ -20,8 +29,7 @@ namespace VoxelCraft
             {
                 for (int z = 0; z < ChunkData.CHUNK_SIZE; z++)
                 {
-                    int value = (int)GetValue(x, z, worldPos);//GetNoise(x, z, worldPos, 0.03d, 3, 5, 6, 40);
-
+                    int value = (int)GetValue(x, z, worldPos);
 
                     value -= (int)worldPos.Y;
 
@@ -30,15 +38,19 @@ namespace VoxelCraft
                         int chunkIndex = x + y * ChunkData.CHUNK_SIZE + z * ChunkData.CHUNK_SIZE * ChunkData.CHUNK_SIZE;
                         if (y > value)
                         {
-                            chunk.Data[chunkIndex] = new BlockData() { BlockID = 0, ExtraData = 3 << 5 };
+                            chunk.BlockData[chunkIndex] = AirBlock;
                         }
                         else if (y == value)
                         {
-                            chunk.Data[chunkIndex] = new BlockData() { BlockID = 1, ExtraData = 0 };
+                            chunk.BlockData[chunkIndex] = SurfaceBlock;
+                        }
+                        else if (y + 2 >= value)
+                        {
+                            chunk.BlockData[chunkIndex] = SubsurfaceBlock;
                         }
                         else
                         {
-                            chunk.Data[chunkIndex] = new BlockData() { BlockID = 2, ExtraData = 0 };
+                            chunk.BlockData[chunkIndex] = BelowGroundBlock;
                         }
                     }
                 }

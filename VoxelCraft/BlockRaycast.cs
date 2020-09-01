@@ -132,7 +132,7 @@ namespace VoxelCraft
 
         private static bool IsBlockHit(Coordinate pos)
         {
-            return (!World.LoadedChunks.TryGetValue(pos.WorldToChunk(), out ChunkData data) || data.Data[Coordinate.BlockToIndex(pos.WorldToBlock())].BlockID != 0);
+            return (!World.LoadedChunks.TryGetValue(pos.WorldToChunk(), out ChunkData data) || data.BlockData[Coordinate.BlockToIndex(pos.WorldToBlock())].BlockID != 0);
         }
 
         private static int DirectionToIncrement(float x)

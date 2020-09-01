@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using VoxelCraft.Engine.Rendering.Standard.Materials;
+﻿using VoxelCraft.Engine.Rendering.Standard.Materials;
 using VoxelCraft.Engine.Rendering.UI;
 using VoxelCraft.Rendering;
 
@@ -32,7 +29,9 @@ namespace VoxelCraft.Engine.Rendering.Standard
                 RenderDataHandler.LoadTextureArray(new string[] {
                     "./Artwork/GrassTop.png", "./Artwork/GrassSide.png",
                     "./Artwork/Dirt.png", "./Artwork/Wood.png",
-                    "./Artwork/WoodTop.png", "./Artwork/Leaf.png" }, 16, 16));
+                    "./Artwork/WoodTop.png", "./Artwork/Leaf.png",
+                    "./Artwork/Stone.png"
+                }, 16, 16));
 
             WhiteText.ChangeColor(OpenTK.Mathematics.Color4.White);
             BlackText.ChangeColor(OpenTK.Mathematics.Color4.Black);
