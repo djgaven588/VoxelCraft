@@ -34,8 +34,8 @@ namespace VoxelCraft.Engine.Rendering.Standard
                     "./Artwork/Dirt.png", "./Artwork/Wood.png",
                     "./Artwork/WoodTop.png", "./Artwork/Leaf.png" }, 16, 16));
 
-            WhiteText.ChangeColor(OpenToolkit.Mathematics.Color4.White);
-            BlackText.ChangeColor(OpenToolkit.Mathematics.Color4.Black);
+            WhiteText.ChangeColor(OpenTK.Mathematics.Color4.White);
+            BlackText.ChangeColor(OpenTK.Mathematics.Color4.Black);
         }
     }
 }

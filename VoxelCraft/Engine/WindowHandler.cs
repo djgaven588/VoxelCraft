@@ -1,6 +1,7 @@
-﻿using OpenToolkit.Graphics.OpenGL4;
-using OpenToolkit.Windowing.Common;
-using OpenToolkit.Windowing.Desktop;
+﻿using OpenTK.Graphics.OpenGL4;
+using OpenTK.Windowing.Common;
+using OpenTK.Windowing.Desktop;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 using System;
 using System.ComponentModel;
 using System.Threading;
@@ -38,6 +39,11 @@ namespace VoxelCraft
 
         protected override void OnLoad()
         {
+            // As of OpenTK 4.0.0 pre9.2, this is required and may be changed in the future.
+            // See: https://github.com/opentk/opentk/pull/1096
+            // Issue: https://github.com/opentk/opentk/issues/1118
+            MakeCurrent();
+
             Debug.Log($"Using OpenGL {GL.GetInteger(GetPName.MajorVersion)}.{GL.GetInteger(GetPName.MinorVersion)}");
             IsFocused = true;
             InputManager.Initialize(this);

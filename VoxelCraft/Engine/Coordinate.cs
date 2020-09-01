@@ -53,29 +53,29 @@ namespace VoxelCraft
         public static Coordinate WorldToChunk(Vector3 position)
         {
             Coordinate chunk = new Coordinate(position);
-            chunk.X = chunk.X >> ChunkData.CHUNK_LOG_SIZE;
-            chunk.Y = chunk.Y >> ChunkData.CHUNK_LOG_SIZE;
-            chunk.Z = chunk.Z >> ChunkData.CHUNK_LOG_SIZE;
-            return chunk;//new Coordinate((int)position.X >> ChunkData.CHUNK_LOG_SIZE, (int)position.Y >> ChunkData.CHUNK_LOG_SIZE, (int)position.Z >> ChunkData.CHUNK_LOG_SIZE);
+            chunk.X >>= ChunkData.CHUNK_LOG_SIZE;
+            chunk.Y >>= ChunkData.CHUNK_LOG_SIZE;
+            chunk.Z >>= ChunkData.CHUNK_LOG_SIZE;
+            return chunk;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Coordinate WorldToBlock(Vector3 position)
         {
             Coordinate block = new Coordinate(position);
-            block.X = block.X & ChunkData.CHUNK_SIZE_MINUS_ONE;
-            block.Y = block.Y & ChunkData.CHUNK_SIZE_MINUS_ONE;
-            block.Z = block.Z & ChunkData.CHUNK_SIZE_MINUS_ONE;
-            return block;//new Coordinate((int)position.X & ChunkData.CHUNK_SIZE_MINUS_ONE, (int)position.Y & ChunkData.CHUNK_SIZE_MINUS_ONE, (int)position.Z & ChunkData.CHUNK_SIZE_MINUS_ONE);
+            block.X &= ChunkData.CHUNK_SIZE_MINUS_ONE;
+            block.Y &= ChunkData.CHUNK_SIZE_MINUS_ONE;
+            block.Z &= ChunkData.CHUNK_SIZE_MINUS_ONE;
+            return block;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Coordinate WorldToBlock()
         {
             Coordinate block = this;
-            block.X = block.X & ChunkData.CHUNK_SIZE_MINUS_ONE;
-            block.Y = block.Y & ChunkData.CHUNK_SIZE_MINUS_ONE;
-            block.Z = block.Z & ChunkData.CHUNK_SIZE_MINUS_ONE;
+            block.X &= ChunkData.CHUNK_SIZE_MINUS_ONE;
+            block.Y &= ChunkData.CHUNK_SIZE_MINUS_ONE;
+            block.Z &= ChunkData.CHUNK_SIZE_MINUS_ONE;
             return block;
         }
 

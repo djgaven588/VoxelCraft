@@ -1,4 +1,4 @@
-﻿using OpenToolkit.Graphics.OpenGL4;
+﻿using OpenTK.Graphics.OpenGL4;
 using VoxelCraft.Rendering;
 
 namespace VoxelCraft

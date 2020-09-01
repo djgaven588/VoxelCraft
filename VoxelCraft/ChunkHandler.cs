@@ -5,7 +5,7 @@ namespace VoxelCraft
     public static class ChunkHandler
     {
         public const byte DISTANCE_KEPT_LOADED = 8;
-        public const byte DISTANCE_LOAD_UPDATE = 6;
+        public const byte DISTANCE_LOAD_UPDATE = 7;
 
         public static void CheckToUnload(Coordinate chunkPosition)
         {
@@ -58,7 +58,7 @@ namespace VoxelCraft
             }
         }
 
-        private static (int, int)[] XZChangeSets = new (int, int)[]
+        private static readonly (int, int)[] XZChangeSets = new (int, int)[]
         {
             (1,0), (0, -1), (-1, 0), (0, 1)
         };
@@ -106,7 +106,7 @@ namespace VoxelCraft
                 for (int i = 0; i < Region.REGION_SIZE; i++)
                 {
                     centerChunk.Y = i;
-                    HandleAttemptLoadUpdate(centerChunk, ring);
+                    HandleAttemptLoadUpdate(centerChunk);
                 }
                 return;
             }
@@ -119,7 +119,7 @@ namespace VoxelCraft
                 for (int i = 0; i < Region.REGION_SIZE; i++)
                 {
                     currentOffset.Y = i;
-                    HandleAttemptLoadUpdate(currentOffset, ring);
+                    HandleAttemptLoadUpdate(currentOffset);
                 }
 
                 currentOffset.X += XZChangeSets[currentSet].Item1;
@@ -142,7 +142,7 @@ namespace VoxelCraft
                 for (int i = 0; i < Region.REGION_SIZE; i++)
                 {
                     centerChunk.Y = i;
-                    HandleAttemptUpdate(centerChunk, ring);
+                    HandleAttemptUpdate(centerChunk);
                 }
                 return;
             }
@@ -155,7 +155,7 @@ namespace VoxelCraft
                 for (int i = 0; i < Region.REGION_SIZE; i++)
                 {
                     currentOffset.Y = i;
-                    HandleAttemptUpdate(currentOffset, ring);
+                    HandleAttemptUpdate(currentOffset);
                 }
 
                 currentOffset.X += XZChangeSets[currentSet].Item1;
@@ -171,7 +171,7 @@ namespace VoxelCraft
             }
         }
 
-        private static void HandleAttemptLoadUpdate(Coordinate position, int ring)
+        private static void HandleAttemptLoadUpdate(Coordinate position)
         {
             if (World.LoadedChunks.TryGetValue(position, out ChunkData chunk) == false)
             {
@@ -179,15 +179,15 @@ namespace VoxelCraft
             }
             else
             {
-                World.UpdateChunk(chunk, ring);
+                World.UpdateChunk(chunk);
             }
         }
 
-        private static void HandleAttemptUpdate(Coordinate position, int ring)
+        private static void HandleAttemptUpdate(Coordinate position)
         {
             if (World.LoadedChunks.TryGetValue(position, out ChunkData chunk))
             {
-                World.UpdateChunk(chunk, ring);
+                World.UpdateChunk(chunk);
             }
         }
 

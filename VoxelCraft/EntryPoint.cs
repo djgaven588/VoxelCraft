@@ -1,6 +1,5 @@
-﻿using OpenToolkit.Windowing.Common;
-using OpenToolkit.Windowing.Desktop;
-using OpenToolkit.Windowing.GraphicsLibraryFramework;
+﻿using OpenTK.Windowing.Common;
+using OpenTK.Windowing.Desktop;
 using System;
 using System.ComponentModel;
 using System.Drawing;
@@ -36,9 +35,9 @@ namespace VoxelCraft
             new NativeWindowSettings()
             {
                 API = ContextAPI.OpenGL,
-                APIVersion = new Version(4, 6),
+                APIVersion = new Version(4, 0),
                 Title = "Voxel Craft",
-                Size = new OpenToolkit.Mathematics.Vector2i(WindowWidth, WindowHeight)
+                Size = new OpenTK.Mathematics.Vector2i(WindowWidth, WindowHeight)
             }, OnLoad, null, OnClosing, OnResize, null, OnRender);
 
             Window.Run();

@@ -1,4 +1,4 @@
-﻿using OpenToolkit.Mathematics;
+﻿using OpenTK.Mathematics;
 using System.Runtime.CompilerServices;
 
 namespace VoxelCraft
@@ -43,7 +43,7 @@ namespace VoxelCraft
 
         public override int GetHashCode()
         {
-            return (X, Y, Z).GetHashCode();
+            return System.HashCode.Combine(X, Y, Z);
         }
 
         public static CoordinateUint operator *(CoordinateUint a, uint b)

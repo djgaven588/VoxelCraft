@@ -1,8 +1,4 @@
-﻿using OpenToolkit.Graphics.OpenGL4;
-using OpenToolkit.Mathematics;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using OpenTK.Mathematics;
 using VoxelCraft.Rendering;
 
 namespace VoxelCraft.Engine.Rendering.Standard.Materials
@@ -14,7 +10,7 @@ namespace VoxelCraft.Engine.Rendering.Standard.Materials
             _colorUniform = GetUniformLocation("color");
         }
 
-        private int _colorUniform;
+        private readonly int _colorUniform;
         private Color4 _color;
 
         public void ChangeColor(Color4 color)
@@ -25,7 +21,6 @@ namespace VoxelCraft.Engine.Rendering.Standard.Materials
         public override void BeforeRenderGroup()
         {
             LoadColor4(_colorUniform, _color);
-            Debug.Log(_color);
             base.BeforeRenderGroup();
         }
     }

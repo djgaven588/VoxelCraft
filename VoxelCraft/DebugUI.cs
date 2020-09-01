@@ -13,7 +13,7 @@ namespace VoxelCraft
     {
         public bool ShouldDraw { get; private set; }
 
-        private UIText mainText = new UIText(StandardFonts.Arial, new UIPosition(Vector2.Zero, Vector2.One * 48));
+        private readonly UIText mainText = new UIText(StandardFonts.Arial, new UIPosition(Vector2.Zero, Vector2.One * 48));
 
         public void AddDebugData(string data)
         {
@@ -45,7 +45,7 @@ namespace VoxelCraft
 
         public void Update(float timeDelta)
         {
-            if (InputManager.IsKeyNowDown(OpenToolkit.Windowing.Common.Input.Key.F3))
+            if (InputManager.IsKeyNowDown(OpenTK.Windowing.Common.Input.Key.F3))
             {
                 ShouldDraw = !ShouldDraw;
             }

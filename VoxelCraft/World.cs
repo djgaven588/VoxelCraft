@@ -6,7 +6,7 @@ using VoxelCraft.Engine.Rendering.Standard;
 using VoxelCraft.Engine.Rendering.UI;
 using VoxelCraft.Rendering;
 using VoxelCraft.Rendering.Standard;
-using Color4 = OpenToolkit.Mathematics.Color4;
+using Color4 = OpenTK.Mathematics.Color4;
 
 namespace VoxelCraft
 {
@@ -17,14 +17,14 @@ namespace VoxelCraft
         
         public static int Crosshair;
         public static Material TestMaterial;
-        public static int RenderDistance = 5;
+        public static int RenderDistance = 6;
         public static Camera Camera;
 
         public static int TerrainUpdate = 0;
         public static int StructureUpdate = 0;
         public static int MeshUpdate = 0;
 
-        private static RollingAverageDebug<(int, int, int)> updateDebug = new RollingAverageDebug<(int, int, int)>(60);
+        private static readonly RollingAverageDebug<(int, int, int)> updateDebug = new RollingAverageDebug<(int, int, int)>(60);
 
         private static DebugUI _debugMenu;
         private static UIImage _crosshair;
@@ -64,11 +64,11 @@ namespace VoxelCraft
                     //Graphics.QueueDraw(TestMaterial, PrimitiveMeshes.Cube, Mathmatics.CreateTransformationMatrix(pos.ToVector() + Vector3.One * 0.5f, Vector3.Zero, Vector3.One));
                     Graphics.QueueDraw(TestMaterial, PrimitiveMeshes.Cube, Mathmatics.CreateTransformationMatrix((pos).ToVector() + Vector3.One * 0.5f + face.ToVector() * 0.75f, Vector3.Zero, Vector3.One / 2));
 
-                    if (InputManager.IsMouseNowDown(OpenToolkit.Windowing.Common.Input.MouseButton.Button1))
+                    if (InputManager.IsMouseNowDown(OpenTK.Windowing.Common.Input.MouseButton.Button1))
                     {
                         chunk.ModifyBlock(pos, BlockDatabase.IDToBlockData[0], true);
                     }
-                    else if (InputManager.IsMouseNowDown(OpenToolkit.Windowing.Common.Input.MouseButton.Button2))
+                    else if (InputManager.IsMouseNowDown(OpenTK.Windowing.Common.Input.MouseButton.Button2))
                     {
                         ChunkData toModify = chunk;
                         Coordinate placeChunk = (pos + face).WorldToChunk();
@@ -135,7 +135,7 @@ namespace VoxelCraft
         /// <param name="blockPosition"></param>
         public static void MarkNearbyChunksForRegen(Coordinate chunkPosition, Coordinate blockPosition)
         {
-            void MarkChunk(Coordinate chunk)
+            static void MarkChunk(Coordinate chunk)
             {
                 if (LoadedChunks.TryGetValue(chunk, out ChunkData c))
                 {
@@ -207,7 +207,7 @@ namespace VoxelCraft
             }
         }
 
-        public static void UpdateChunk(ChunkData chunk, int ring)
+        public static void UpdateChunk(ChunkData chunk)
         {
             if (chunk.CurrentOperation == ChunkData.ChunkOperation.Unloading)
             {

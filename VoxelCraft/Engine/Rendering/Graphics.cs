@@ -1,4 +1,4 @@
-﻿using OpenToolkit.Graphics.OpenGL4;
+﻿using OpenTK.Graphics.OpenGL4;
 using System.Collections.Generic;
 using System.Numerics;
 using VoxelCraft.Engine.Rendering.Standard.Materials;
@@ -14,7 +14,7 @@ namespace VoxelCraft.Rendering
         private static Matrix4x4 ViewMatrix;
         private static Matrix4x4 ProjectionMatrix;
 
-        private static Dictionary<Mesh, Dictionary<Material, Queue<Matrix4x4>>> renderingQueue = new Dictionary<Mesh, Dictionary<Material, Queue<Matrix4x4>>>();
+        private static readonly Dictionary<Mesh, Dictionary<Material, Queue<Matrix4x4>>> renderingQueue = new Dictionary<Mesh, Dictionary<Material, Queue<Matrix4x4>>>();
         private static SkyboxMaterial SkyboxMaterial;
 
         private static Camera Camera;

@@ -1,15 +1,15 @@
 ﻿using System.Numerics;
-using System.Text;
 using VoxelCraft.Engine.Rendering.Standard;
 using VoxelCraft.Engine.Rendering.Standard.Materials;
 using VoxelCraft.Rendering;
 using VoxelCraft.Rendering.Standard;
+using Color4 = OpenTK.Mathematics.Color4;
 
 namespace VoxelCraft.Engine.Rendering.UI
 {
     public class UIImage : UIElement
     {
-        public UIImage(UIPosition position, int textureID, OpenToolkit.Mathematics.Color4 tint) : base(position)
+        public UIImage(UIPosition position, int textureID, Color4 tint) : base(position)
         {
             Texture = textureID;
             material = new UIMaterial(StandardMaterials.WhiteText.ProgramID, Texture);
@@ -17,7 +17,7 @@ namespace VoxelCraft.Engine.Rendering.UI
         }
 
         public int Texture;
-        private UIMaterial material;
+        private readonly UIMaterial material;
 
         public override void Draw()
         {

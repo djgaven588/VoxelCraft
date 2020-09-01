@@ -1,4 +1,4 @@
-﻿using OpenToolkit.Graphics.OpenGL4;
+﻿using OpenTK.Graphics.OpenGL4;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -22,7 +22,7 @@ namespace VoxelCraft
             }
 
             string[] splitFilePath = frame.GetFileName().Split('\\');
-            string fileName = splitFilePath[splitFilePath.Length - 1];
+            string fileName = splitFilePath[^1];
             string callInfo = fileName + " : " + frame.GetFileLineNumber();
 
             Console.WriteLine($"< {callInfo} - {toLog}");
@@ -62,7 +62,7 @@ namespace VoxelCraft
 
     public class RollingAverageDebug<T>
     {
-        private T[] KeptData;
+        private readonly T[] KeptData;
         private int CurrentIndex;
 
         public RollingAverageDebug(int entryCount)
