@@ -38,6 +38,7 @@ namespace VoxelCraft
 
         protected override void OnLoad()
         {
+            Debug.Log($"Using OpenGL {GL.GetInteger(GetPName.MajorVersion)}.{GL.GetInteger(GetPName.MinorVersion)}");
             IsFocused = true;
             InputManager.Initialize(this);
             InputManager.ChangeMouseState(true);

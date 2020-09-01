@@ -7,7 +7,7 @@ namespace VoxelCraft.Engine.Rendering
 {
     public static class TextMeshGenerator
     {
-        public static Mesh RegenerateMesh(string text, FontData font, float fontSize, float lineHeight, Color4 color, int whiteSpaceAdvance = 18, float advanceScale = 0.9f, Mesh mesh = null)
+        public static Mesh RegenerateMesh(string text, FontData font, float fontSize, float lineHeight, int whiteSpaceAdvance = 18, float advanceScale = 0.9f, Mesh mesh = null)
         {
             if(mesh == null)
             {
@@ -45,26 +45,22 @@ namespace VoxelCraft.Engine.Rendering
                     vertexData[currentVertex++] =
                         new UIVertexData(
                             new Vector3(cursorPos - charData.Offset.X + charData.Width, -currentLine * lineHeight - charData.Offset.Y, 0),
-                            new Vector2(charData.BottomRight.X, charData.TopLeft.Y),
-                            color);
+                            new Vector2(charData.BottomRight.X, charData.TopLeft.Y));
 
                     vertexData[currentVertex++] =
                         new UIVertexData(
                             new Vector3(cursorPos - charData.Offset.X + charData.Width, -currentLine * lineHeight - charData.Offset.Y - charData.Height, 0), 
-                            charData.BottomRight,
-                            color);
+                            charData.BottomRight);
 
                     vertexData[currentVertex++] =
                         new UIVertexData(
                             new Vector3(cursorPos - charData.Offset.X, -currentLine * lineHeight - charData.Offset.Y - charData.Height, 0),
-                            new Vector2(charData.TopLeft.X, charData.BottomRight.Y),
-                            color);
+                            new Vector2(charData.TopLeft.X, charData.BottomRight.Y));
 
                     vertexData[currentVertex++] =
                         new UIVertexData(
                             new Vector3(cursorPos - charData.Offset.X, -currentLine * lineHeight - charData.Offset.Y, 0),
-                            charData.TopLeft,
-                            color);
+                            charData.TopLeft);
 
                     cursorPos += charData.Advance * advanceScale;
                 }

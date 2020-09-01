@@ -11,23 +11,22 @@ namespace VoxelCraft.Engine.Rendering.Standard.Materials
     {
         public UIMaterial(int programID, int textureID) : base(programID, textureID)
         {
-            colorUniform = GetUniformLocation("color");
+            _colorUniform = GetUniformLocation("color");
         }
 
-        private int colorUniform;
+        private int _colorUniform;
+        private Color4 _color;
 
         public void ChangeColor(Color4 color)
         {
-            LoadColor4(colorUniform, color);
+            _color = color;
         }
 
         public override void BeforeRenderGroup()
         {
-            if (_textureID != 0)
-            {
-                GL.ActiveTexture(TextureUnit.Texture0);
-                GL.BindTexture(TextureTarget.Texture2D, _textureID);
-            }
+            LoadColor4(_colorUniform, _color);
+            Debug.Log(_color);
+            base.BeforeRenderGroup();
         }
     }
 }

@@ -36,7 +36,7 @@ namespace VoxelCraft
             new NativeWindowSettings()
             {
                 API = ContextAPI.OpenGL,
-                APIVersion = new Version(4, 0),
+                APIVersion = new Version(4, 6),
                 Title = "Voxel Craft",
                 Size = new OpenToolkit.Mathematics.Vector2i(WindowWidth, WindowHeight)
             }, OnLoad, null, OnClosing, OnResize, null, OnRender);

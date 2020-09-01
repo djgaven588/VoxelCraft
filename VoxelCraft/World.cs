@@ -2,12 +2,11 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Numerics;
-using VoxelCraft.Engine.Rendering;
 using VoxelCraft.Engine.Rendering.Standard;
-using VoxelCraft.Engine.Rendering.Standard.Materials;
 using VoxelCraft.Engine.Rendering.UI;
 using VoxelCraft.Rendering;
 using VoxelCraft.Rendering.Standard;
+using Color4 = OpenToolkit.Mathematics.Color4;
 
 namespace VoxelCraft
 {
@@ -16,7 +15,7 @@ namespace VoxelCraft
         public static ConcurrentDictionary<Coordinate, ChunkData> LoadedChunks = new ConcurrentDictionary<Coordinate, ChunkData>();
         public static Coordinate PlayerChunk;
         
-        public static UIMaterial Crosshair;
+        public static int Crosshair;
         public static Material TestMaterial;
         public static int RenderDistance = 5;
         public static Camera Camera;
@@ -28,20 +27,19 @@ namespace VoxelCraft
         private static RollingAverageDebug<(int, int, int)> updateDebug = new RollingAverageDebug<(int, int, int)>(60);
 
         private static DebugUI _debugMenu;
+        private static UIImage _crosshair;
 
         public static void Initialize()
         {
             _debugMenu = new DebugUI();
 
+            Crosshair = RenderDataHandler.LoadTexture("./Artwork/Dirt.png");
+
+            _crosshair = new UIImage(new UIPosition(Vector2.One * 0.5f, Vector2.Zero), Crosshair, Color4.White);
+
             TestMaterial = new Material(
                 RenderDataHandler.GenerateProgram("./Engine/Rendering/Standard/Shaders/vertex.txt", "./Engine/Rendering/Standard/Shaders/fragment.txt", StandardMeshVertexData.ShaderAttributes),
                 RenderDataHandler.LoadTexture("./Artwork/Dirt.png"));
-
-            Crosshair = new UIMaterial(
-                RenderDataHandler.GenerateProgram("./Engine/Rendering/Standard/Shaders/UIVertex.txt", "./Engine/Rendering/Standard/Shaders/UIFragment.txt", UIVertexData.ShaderAttributes),
-                RenderDataHandler.LoadTexture("./Artwork/Dirt.png"));
-
-            Crosshair.ChangeColor(OpenToolkit.Mathematics.Color4.White);
 
             Camera = new Camera(0, 80, 0);
 
@@ -52,16 +50,6 @@ namespace VoxelCraft
         {
             Camera.Update((float)timeDelta);
         }
-
-        private static Vector3[] FaceDirections = new Vector3[]
-        {
-            new Vector3(0, 0, 1),
-            new Vector3(0, 0, -1),
-            new Vector3(1, 0, 0),
-            new Vector3(-1, 0, 0),
-            new Vector3(0, 1, 0),
-            new Vector3(0, -1, 0)
-        };
 
         public static void UpdateWorld(double timeDelta)
         {
@@ -133,7 +121,11 @@ namespace VoxelCraft
 
             _debugMenu.Draw();
 
-            Graphics.QueueDraw(Crosshair, PrimitiveMeshes.CenteredQuad, Graphics.GetUIMatrix(new Vector2(0, 0), 25, new UIPosition(Vector2.One * 0.5f, Vector2.Zero)));
+            _debugMenu.Clear();
+
+            _crosshair.Draw();
+
+            //Graphics.QueueDraw(Crosshair, PrimitiveMeshes.CenteredQuad, Graphics.GetUIMatrix(new Vector2(0, 0), 25, new UIPosition(Vector2.One * 0.5f, Vector2.Zero)));
         }
 
         /// <summary>

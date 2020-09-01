@@ -20,6 +20,11 @@ namespace VoxelCraft
             mainText.Text += data + '\n';
         }
 
+        public void Clear()
+        {
+            mainText.Text = "";
+        }
+
         public DebugUI()
         {
 

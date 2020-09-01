@@ -28,16 +28,7 @@ namespace VoxelCraft.Engine.Rendering.UI
             {
                 _lastDisplayedText = Text;
 
-                mesh = TextMeshGenerator.RegenerateMesh(
-                    _lastDisplayedText,
-                    _font,
-                    6,
-                    50,
-                    OpenToolkit.Mathematics.Color4.Black,
-                    18,
-                    0.9f,
-                    mesh
-                    );
+                mesh = TextMeshGenerator.RegenerateMesh(_lastDisplayedText, _font, 6, 50, 18, 0.9f, mesh);
             }
 
             Graphics.QueueDraw(StandardMaterials.WhiteText, mesh, Graphics.GetUIMatrix(Vector2.Zero, Scale, Position));
