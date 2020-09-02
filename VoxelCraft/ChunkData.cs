@@ -24,6 +24,7 @@ namespace VoxelCraft
 
         public bool RegenerateMesh;
         public bool RegenerateLighting;
+        public bool UploadLighting;
 
         public Coordinate ChunkPosition;
         public ChunkOperation CurrentOperation;

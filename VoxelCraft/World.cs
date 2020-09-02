@@ -254,6 +254,11 @@ namespace VoxelCraft
                 if (GetAdjacentNeighbors(chunk.ChunkPosition, out ChunkData[] neighbors))
                 {
                     ChunkOperationDispatcher.DispatchMeshGeneration(ref chunk, neighbors);
+                    if(chunk.ChunkPosition.Y + 1 == Region.REGION_SIZE)
+                    {
+                        Debug.Log(chunk.ChunkPosition);
+                    }
+
                     MeshUpdate++;
                 }
             }
@@ -289,13 +294,23 @@ namespace VoxelCraft
                 return false;
             }
 
-            if (location.Y != Region.REGION_SIZE && (LoadedChunks.TryGetValue(location + new Coordinate(0, 1, 0), out neighbors[4]) == false || !IsNeighborRenderReady(neighbors[4])))
+            
+
+            if (location.Y != Region.REGION_SIZE - 1 && (LoadedChunks.TryGetValue(location + new Coordinate(0, 1, 0), out neighbors[4]) == false || !IsNeighborRenderReady(neighbors[4])))
             {
+                if (location.Y == Region.REGION_SIZE - 1)
+                {
+                    return true;
+                }
                 return false;
             }
 
             if (location.Y != 0 && (LoadedChunks.TryGetValue(location - new Coordinate(0, 1, 0), out neighbors[5]) == false || !IsNeighborRenderReady(neighbors[5])))
             {
+                if (location.Y == 0)
+                {
+                    return true;
+                }
                 return false;
             }
 

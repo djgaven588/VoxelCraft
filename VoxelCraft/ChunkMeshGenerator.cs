@@ -21,7 +21,7 @@ namespace VoxelCraft
 
             bool useNeighbors = neighbors != null && neighbors.Length == 6;
 
-            ChunkLightingGenerator.GenerateLighting(chunk);
+            ChunkLightingGenerator.GenerateLighting(chunk, neighbors);
 
             for (uint i = 0; i < chunk.BlockData.Length; i++)
             {
@@ -78,7 +78,7 @@ namespace VoxelCraft
                     IndiciesBuffer[indiciesCount++] = vertexCount;
 
                     uint lighting = (k == 4 ? 3u : k == 5 ? 1u : 2u);
-                    uint realLighting = neighborLight;
+                    uint realLighting = (uint)(neighborLight < 16 ? neighborLight : 15);
 
                     for (uint j = 0; j < 4; j++)
                     {
