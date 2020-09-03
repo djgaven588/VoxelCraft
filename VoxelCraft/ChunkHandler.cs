@@ -4,8 +4,8 @@ namespace VoxelCraft
 {
     public static class ChunkHandler
     {
-        public const byte DISTANCE_KEPT_LOADED = 8;
-        public const byte DISTANCE_LOAD_UPDATE = 7;
+        public const byte DISTANCE_KEPT_LOADED = 10;
+        public const byte DISTANCE_LOAD_UPDATE = 8;
 
         public static void CheckToUnload(Coordinate chunkPosition)
         {

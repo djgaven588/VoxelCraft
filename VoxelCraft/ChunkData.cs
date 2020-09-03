@@ -23,8 +23,8 @@ namespace VoxelCraft
         public const byte CHUNK_LOG_SIZE_2 = CHUNK_LOG_SIZE * 2;
 
         public bool RegenerateMesh;
-        public bool RegenerateLighting;
-        public bool UploadLighting;
+        public bool LightUpdateRequired = false;
+        public bool InitialLightRan = false;
 
         public Coordinate ChunkPosition;
         public ChunkOperation CurrentOperation;
@@ -38,7 +38,6 @@ namespace VoxelCraft
             // If we are using a world position, translate to local, either way we will convert the position to an index
             BlockData[positionIsWorld ? pos.WorldToBlock().BlockToIndex() : pos.BlockToIndex()] = data;
             RegenerateMesh = RegenerateMesh || regenMesh;
-            RegenerateLighting = RegenerateMesh || regenMesh;
 
             World.MarkNearbyChunksForRegen(ChunkPosition, positionIsWorld ? pos.WorldToBlock() : pos);
         }
@@ -46,7 +45,6 @@ namespace VoxelCraft
         public void MarkForRegen()
         {
             RegenerateMesh = true;
-            RegenerateLighting = true;
         }
 
         public ChunkData(Coordinate position)

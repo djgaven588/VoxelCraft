@@ -14,15 +14,13 @@ namespace VoxelCraft.Engine.Rendering.Standard
         public static void Init()
         {
             int uiShader = RenderDataHandler.GenerateProgram("./Engine/Rendering/Standard/Shaders/UIVertex.txt", "./Engine/Rendering/Standard/Shaders/UIFragment.txt", UIVertexData.ShaderAttributes);
+            WhiteText = new UIMaterial(
+                uiShader,
+                StandardFonts.Arial.TextureId); 
+            
             BlackText = new UIMaterial(
                 uiShader,
                 StandardFonts.Arial.TextureId);
-
-            WhiteText = new UIMaterial(
-                uiShader,
-                StandardFonts.Arial.TextureId);
-
-            
 
             ChunkMaterial = new ChunkMaterial(
                 RenderDataHandler.GenerateProgram("chunkVertex.txt", "chunkFragment.txt", ChunkBlockVertexData.ShaderAttributes),

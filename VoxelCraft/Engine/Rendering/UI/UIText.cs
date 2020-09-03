@@ -32,7 +32,11 @@ namespace VoxelCraft.Engine.Rendering.UI
             }
 
             Graphics.QueueDraw(StandardMaterials.WhiteText, mesh, Graphics.GetUIMatrix(Vector2.Zero, Scale, Position));
-            Graphics.QueueDraw(StandardMaterials.BlackText, mesh, Graphics.GetUIMatrix(OutlineOffset, Scale, Position));
+
+            if (Outline)
+            {
+                Graphics.QueueDraw(StandardMaterials.BlackText, mesh, Graphics.GetUIMatrix(OutlineOffset, Scale, Position));
+            }
         }
 
         ~UIText()

@@ -58,7 +58,7 @@ namespace VoxelCraft.Rendering
 
         public void LoadColor4(int location, Color4 color)
         {
-            GL.ProgramUniform4(ProgramID, location, color.R, color.B, color.G, color.A);
+            GL.ProgramUniform4(ProgramID, location, color.R, color.G, color.B, color.A);
         }
 
         public virtual void BeforeRenderGroup()

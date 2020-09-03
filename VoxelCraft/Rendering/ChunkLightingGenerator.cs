@@ -34,7 +34,6 @@ namespace VoxelCraft
                     {
                         int cost = (chunkToEdit.BlockData[neighborIndex].ExtraData >> 6 & 1) == 1 ? 0 : LightingFalloff;
                         chunkToEdit.LightingData[neighborIndex] = (byte)(chunk.LightingData[index] - cost);
-                        chunkToEdit.UploadLighting = true;
                         toVisit.Enqueue((chunkToEdit, neighborIndex));
                     }
                 }
@@ -65,7 +64,6 @@ namespace VoxelCraft
                         if (valid && chunkToEdit != null && (chunkToEdit.BlockData[neighborIndex].ExtraData >> 5 & 1) == 1 && chunkToEdit.LightingData[neighborIndex] + LightingFalloff < chunk.LightingData[index])
                         {
                             chunkToEdit.LightingData[neighborIndex] = (byte)(chunk.LightingData[index] - LightingFalloff);
-                            chunkToEdit.UploadLighting = true;
                             toVisit.Enqueue((chunkToEdit, neighborIndex));
                         }
                     }

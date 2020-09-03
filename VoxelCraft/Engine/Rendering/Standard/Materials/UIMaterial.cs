@@ -1,4 +1,5 @@
 ﻿using OpenTK.Mathematics;
+using System;
 using VoxelCraft.Rendering;
 
 namespace VoxelCraft.Engine.Rendering.Standard.Materials
@@ -11,7 +12,7 @@ namespace VoxelCraft.Engine.Rendering.Standard.Materials
         }
 
         private readonly int _colorUniform;
-        private Color4 _color;
+        protected Color4 _color;
 
         public void ChangeColor(Color4 color)
         {
@@ -22,6 +23,17 @@ namespace VoxelCraft.Engine.Rendering.Standard.Materials
         {
             LoadColor4(_colorUniform, _color);
             base.BeforeRenderGroup();
+        }
+
+        public override bool Equals(object obj)
+        {
+            return base.Equals(obj) && obj is UIMaterial material &&
+                   _color == material._color;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(base.GetHashCode(), _color);
         }
     }
 }

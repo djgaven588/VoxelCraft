@@ -14,7 +14,7 @@ namespace VoxelCraft
     {
         public static ConcurrentDictionary<Coordinate, ChunkData> LoadedChunks = new ConcurrentDictionary<Coordinate, ChunkData>();
         public static Coordinate PlayerChunk;
-        
+
         public static int Crosshair;
         public static Material TestMaterial;
         public static int RenderDistance = 6;
@@ -58,7 +58,7 @@ namespace VoxelCraft
             if (raycastHit)
             {
                 // We maybe hit something, we need to check though as we could have hit a missing chunk.
-                if(LoadedChunks.TryGetValue(pos.WorldToChunk(), out ChunkData chunk))
+                if (LoadedChunks.TryGetValue(pos.WorldToChunk(), out ChunkData chunk))
                 {
                     // We hit something! Let's display the results.
                     //Graphics.QueueDraw(TestMaterial, PrimitiveMeshes.Cube, Mathmatics.CreateTransformationMatrix(pos.ToVector() + Vector3.One * 0.5f, Vector3.Zero, Vector3.One));
@@ -78,7 +78,7 @@ namespace VoxelCraft
                         {
                             LoadedChunks.TryGetValue(placeChunk, out toModify);
                         }
-                        
+
                         toModify?.ModifyBlock(placePosition, BlockDatabase.IDToBlockData[2], false);
                     }
                 }
@@ -88,9 +88,16 @@ namespace VoxelCraft
 
             ChunkOperationDispatcher.RunActionsWaitingForMainThread();
 
+            bool _shouldSendLighting = WorldLightingGenerator.ShouldSendLighting;
+
             ChunkHandler.CheckToUnload(PlayerChunk);
             ChunkHandler.CheckToLoadAndUpdate(PlayerChunk);
             ChunkHandler.CheckToRender(PlayerChunk);
+
+            if (_shouldSendLighting)
+            {
+                WorldLightingGenerator.UpdatesSinceLastSend = 0;
+            }
 
             updateDebug.AddData((TerrainUpdate, StructureUpdate, MeshUpdate));
 
@@ -244,21 +251,25 @@ namespace VoxelCraft
             {
                 chunk.Mesh = Mesh.GenerateMesh(ChunkBlockVertexData.Attributes);
             }
-            else if (chunk.Mesh != null && chunk.Mesh.VertexCount > 0)
+            else if (chunk.Mesh != null)
             {
-                Graphics.DrawNow(StandardMaterials.ChunkMaterial, chunk.Mesh, Mathmatics.CreateTransformationMatrix(chunk.ChunkPosition.ChunkToWorld().ToVector(), Vector3.Zero, Vector3.One));
+                if (chunk.InitialLightRan == false && WorldLightingGenerator.ShouldAddNewChunk)
+                {
+                    WorldLightingGenerator.StartLightForChunk(chunk);
+                    chunk.InitialLightRan = true;
+                }
+
+                if (chunk.Mesh.VertexCount > 0)
+                {
+                    Graphics.DrawNow(StandardMaterials.ChunkMaterial, chunk.Mesh, Mathmatics.CreateTransformationMatrix(chunk.ChunkPosition.ChunkToWorld().ToVector(), Vector3.Zero, Vector3.One));
+                }
             }
 
-            if (chunk.RegenerateMesh && chunk.CurrentOperation == ChunkData.ChunkOperation.Ready)
+            if ((chunk.RegenerateMesh || (chunk.LightUpdateRequired && WorldLightingGenerator.ShouldSendLighting)) && chunk.CurrentOperation == ChunkData.ChunkOperation.Ready)
             {
                 if (GetAdjacentNeighbors(chunk.ChunkPosition, out ChunkData[] neighbors))
                 {
                     ChunkOperationDispatcher.DispatchMeshGeneration(ref chunk, neighbors);
-                    if(chunk.ChunkPosition.Y + 1 == Region.REGION_SIZE)
-                    {
-                        Debug.Log(chunk.ChunkPosition);
-                    }
-
                     MeshUpdate++;
                 }
             }

@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Threading;
+using VoxelCraft.Rendering;
 
 namespace VoxelCraft
 {
@@ -17,17 +18,20 @@ namespace VoxelCraft
         private static readonly ConcurrentQueue<Action> actionsWaitingForMainThread = new ConcurrentQueue<Action>();
         private static readonly ConcurrentQueue<ChunkMeshGenerator> meshGeneratorPool = new ConcurrentQueue<ChunkMeshGenerator>();
         private static int activeMeshGenerators = 0;
+        private static int activeLightGenerators = 0;
 
         private static readonly ConcurrentQueue<string> debugMessages = new ConcurrentQueue<string>();
         private static bool shutdownThreads = false;
 
-        public static readonly int MAX_MESH_GENERATORS = Math.Min(Math.Max(Environment.ProcessorCount, 4) * 4, 32);
+        public static readonly int MAX_MESH_GENERATORS = Math.Min(Math.Max(Environment.ProcessorCount, 2) * 4, 32);
+        public static readonly int MAX_LIGHT_GENERATORS = Math.Min(Math.Max(Environment.ProcessorCount, 2), 32);
 
         static ChunkOperationDispatcher()
         {
             for (int i = 0; i < jobThreads.Length; i++)
             {
-                jobThreads[i] = new Thread(ThreadLoop);
+                int copy = i;
+                jobThreads[i] = new Thread(() => ThreadLoop(copy));
                 jobThreads[i].Start();
             }
         }
@@ -38,7 +42,7 @@ namespace VoxelCraft
             jobSemaphore.Release(Environment.ProcessorCount - 1);
         }
 
-        private static void ThreadLoop()
+        private static void ThreadLoop(int threadNumber)
         {
             while (!shutdownThreads)
             {
@@ -89,6 +93,12 @@ namespace VoxelCraft
 
                     structureJob.chunk.CurrentOperation = ChunkData.ChunkOperation.Ready;
                 }
+                else if(activeLightGenerators < MAX_LIGHT_GENERATORS)
+                {
+                    activeLightGenerators++;
+                    WorldLightingGenerator.RunLighting(50000);
+                    activeLightGenerators--;
+                }
             }
         }
 
@@ -96,6 +106,7 @@ namespace VoxelCraft
         {
             chunkData.CurrentOperation = ChunkData.ChunkOperation.Generating_Mesh;
             chunkData.RegenerateMesh = false;
+            chunkData.LightUpdateRequired = false;
             meshJobs.Enqueue((chunkData, neighbors));
             jobSemaphore.Release(1);
         }
@@ -131,6 +142,12 @@ namespace VoxelCraft
                 {
                     break;
                 }
+            }
+
+            // Make sure all jobs are done
+            if (jobSemaphore.CurrentCount < jobThreads.Length)
+            {
+                jobSemaphore.Release(jobThreads.Length);
             }
         }
     }
